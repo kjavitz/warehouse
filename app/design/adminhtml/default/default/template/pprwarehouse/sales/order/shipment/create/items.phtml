@@ -1,0 +1,184 @@
+<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_View_Items */ ?>
+<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_View_Items */ ?>
+<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_Invoice_Create_Items */ ?>
+<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_Invoice_Create_Items */ ?>
+<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_Shipment_Create_Items */ ?>
+<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_Shipment_Create_Items */ ?>
+<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_Creditmemo_Create_Items */ ?>
+<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_Creditmemo_Create_Items */ ?>
+<?php
+//add jquery
+//foreach input with name shipment[items]
+?>
+
+<!-- Warehouse -->
+<?php $helper                       = $this->helper('warehouse') ?>
+<!-- End Warehouse -->
+
+<link rel="stylesheet" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.css'; ?>" />
+<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/jquery/jquery-1.8.0.js'; ?>"></script>
+<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.js'; ?>"></script>
+
+<div class="grid np">
+	<div class="hor-scroll">
+		<table cellspacing="0" class="data order-tables">
+			<col />
+			<!-- Warehouse -->
+			<col width="1" />
+			<!-- End Warehouse -->
+			<col width="1" />
+			<col width="1" />
+			<?php if (!$this->canShipPartiallyItem()): ?>
+				<col width="20" />
+			<?php endif; ?>
+			<thead>
+			<tr class="headings">
+				<th><?php echo $this->helper('sales')->__('Product') ?></th>
+
+				<!-- Warehouse -->
+				<th><?php echo $helper->__('Warehouse') ?></th>
+				<!-- End Warehouse -->
+
+				<th class="a-center"><?php echo $this->helper('sales')->__('Qty') ?></th>
+				<th<?php if ($this->isShipmentRegular()): ?> class="last"<?php endif; ?>><span class="nobr"><?php echo $this->helper('sales')->__('Qty to Ship') ?></span></th>
+				<?php if (!$this->canShipPartiallyItem()): ?>
+					<th class="a-center last"><span class="nobr"><?php echo $this->helper('sales')->__('Ship') ?></span></th>
+				<?php endif; ?>
+			</tr>
+			</thead>
+			<?php $_items = $this->getShipment()->getAllItems() ?>
+			<?php $_i=0;foreach ($_items as $_item): if ($_item->getOrderItem()->getIsVirtual() || $_item->getOrderItem()->getParentItem()): continue; endif; $_i++ ?>
+				<tbody class="<?php echo $_i%2?'odd':'even' ?>">
+				<?php echo $this->getItemHtml($_item) ?>
+				<?php echo $this->getItemExtraInfoHtml($_item->getOrderItem()) ?>
+				</tbody>
+			<?php endforeach; ?>
+		</table>
+	</div>
+</div>
+<br />
+<div class="box-left entry-edit">
+	<div class="entry-edit-head"><h4><?php echo $this->__('Shipment Comments') ?></h4></div>
+	<fieldset>
+		<div id="order-history_form">
+            <span class="field-row">
+                <label class="normal" for="shipment_comment_text"><?php echo Mage::helper('sales')->__('Shipment Comments') ?></label>
+                <textarea id="shipment_comment_text" name="shipment[comment_text]" rows="3" cols="5" style="height:6em; width:99%;"><?php echo $this->getShipment()->getCommentText(); ?></textarea>
+            </span>
+			<div class="clear"></div>
+		</div>
+	</fieldset>
+</div>
+
+<div class="box-right entry-edit">
+	<div class="order-totals">
+		<div class="order-totals-bottom">
+			<?php if ($this->canCreateShippingLabel()): ?>
+				<p>
+					<label class="normal" for="create_shipping_label"><?php echo Mage::helper('sales')->__('Create Shipping Label') ?></label>
+					<input id="create_shipping_label" name="shipment[create_shipping_label]" value="1" type="checkbox"  onclick="toggleCreateLabelCheckbox();" />
+				</p>
+			<?php endif ?>
+			<p>
+				<label class="normal" for="notify_customer"><?php echo Mage::helper('sales')->__('Append Comments') ?></label>
+				<input id="notify_customer" name="shipment[comment_customer_notify]" value="1" type="checkbox" />
+			</p>
+			<?php if ($this->canSendShipmentEmail()): ?>
+				<p>
+					<label class="normal" for="send_email"><?php echo Mage::helper('sales')->__('Email Copy of Shipment') ?></label>
+					<input id="send_email" name="shipment[send_email]" value="1" type="checkbox" />
+				</p>
+			<?php endif; ?>
+			<div class="a-right">
+				<?php echo $this->getChildHtml('submit_button') ?>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="clear"></div>
+<script type="text/javascript">
+	//<![CDATA[
+	var sendEmailCheckbox = $('send_email');
+	if (sendEmailCheckbox) {
+		var notifyCustomerCheckbox = $('notify_customer');
+		var shipmentCommentText = $('shipment_comment_text');
+		Event.observe(sendEmailCheckbox, 'change', bindSendEmail);
+		bindSendEmail();
+	}
+	function bindSendEmail()
+	{
+		if (sendEmailCheckbox.checked == true) {
+			notifyCustomerCheckbox.disabled = false;
+			//shipmentCommentText.disabled = false;
+		}
+		else {
+			notifyCustomerCheckbox.disabled = true;
+			//shipmentCommentText.disabled = true;
+		}
+	}
+	function toggleCreateLabelCheckbox(){
+		var checkbox = $('create_shipping_label');
+		var submitButton = checkbox.up('.order-totals').select('.submit-button span')[0];
+		if (checkbox.checked) {
+			submitButton.innerText += '...';
+		} else {
+			submitButton.innerText = submitButton.innerText.replace(/\.\.\.$/, '');
+		}
+	}
+	function submitShipment(btn){
+		var checkbox = $(btn).up('.order-totals').select('#create_shipping_label')[0];
+		if (checkbox && checkbox.checked) {
+			packaging.showWindow();
+		} else if(editForm.submit()) {
+			disableElements('submit-button');
+		}
+	}
+
+	//]]>
+</script>
+<script>
+	$jppr = jQuery.noConflict();
+	$jppr(document).ready(function(){
+		var nameArr = [];
+		$jppr('input.reservation-item').each(function(){
+			var $this = $jppr(this);
+			var match = $this.attr("name").match(/\[(\d+)\]/);
+			var name = '';
+			if (match) {
+				name = match[1];
+			}
+			$jppr('<p class="serialN">Serial Numbers:</p>').insertAfter($this);
+			for(var j=0;j<$this.val();j++){
+				$jppr('<input type="text" class="sn" name="sn['+name+'][]" prid="'+name+'"/>').insertAfter($this.next());
+			}
+		});
+
+		$jppr('.sn').each(function(){
+			$jppr(this).autocomplete({
+				ajax:{
+					url:'<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getSerialNumbersbyItemId/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>'
+				},
+				cb:{
+					populate:function(){
+						return {
+							productId: $jppr(this).attr('prid'),
+							value:$jppr(this).val()
+						}
+					},
+
+					select:function(item, i){
+
+					}
+				},
+				delay:100,
+				minLength:0,
+				filter: false
+			}).focus();
+			$jppr(this).focus(function(){
+				$jppr(this).autocomplete('trigger');
+			});
+		});
+		$jppr('.sn').blur();
+
+	});
+</script>

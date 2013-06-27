@@ -1,0 +1,557 @@
+<?php
+/** @var $this ITwebexperts_PPRWarehouse_Block_Payperrentals_Adminhtml_Catalog_Product_Edit_Tab_Payperrentals_Serialnumbers */
+?>
+<?php $_htmlId      = $this->getElement()->getHtmlId() ?>
+<?php // $_htmlClass   = $this->getElement()->getClass() ?>
+<?php $_htmlName    = $this->getElement()->getName() ?>
+<?php $_readonly    = $this->getElement()->getReadonly() ?>
+<?php $_warehouseHelper = $this->getWarehouseHelper() ?>
+
+<?php foreach($this->getStockInventories() as $_stockId): ?>
+	<?php $_warehouseTitle = $_warehouseHelper->getWarehouseTitleByStockId($_stockId) ?>
+<tr>
+<td class="label"><?php echo $this->getElement()->getLabel() . ' (' . $_warehouseTitle . ')' ?></td>
+<td colspan="10" class="grid serialnumbers">
+<table cellspacing="0" class="data border" id="serialnumbers_table_<?php echo $_stockId ?>" stockid="<?php echo $_stockId ?>">
+	<col width="120" />
+	<col width="95" />
+	<col />
+	<col width="1" />
+	<thead>
+	<tr class="headings">
+		<th><?php echo Mage::helper('catalog')->__('SN') ?></th>
+		<th><?php echo Mage::helper('catalog')->__('Status') ?></th>
+		<th class="last"><?php echo Mage::helper('catalog')->__('Action') ?></th>
+	</tr>
+	</thead>
+	<tbody id="<?php echo $_htmlId . "_$_stockId" ?>_container"></tbody>
+	<tfoot>
+	<tr>
+		<td colspan="2" class="a-left">Number of SN:<input type="text" id="genInput-<?php echo $_stockId ?>" name="generate_input" value="1" /> &nbsp;<?php echo $this->getChildHtml('generate_button'); ?></td>
+		<td class="a-right"><?php echo $this->getChildHtml('add_button'); ?></td>
+	</tr>
+	</tfoot>
+</table>
+</td></tr>
+<?php endforeach ?>
+
+<script type="text/javascript">
+var serialNumbersRowTemplate = '<tr>'
+	+ '<td class="nobr">'
+	+ '<input class="sn required-entry" name="<?php echo $_htmlName ?>[{{index}}][sn]" id="serialnumbers_row_{{index}}_sn"/>'
+	+ '<input class="stockid required-entry" type="hidden" name="<?php echo $_htmlName ?>[{{index}}][stockid]" id="serialnumbers_row_{{index}}_stockid"/>'
+	+ '</td>'
+	+ '<td><select class="status required-entry" name="<?php echo $_htmlName ?>[{{index}}][status]" id="serialnumbers_row_{{index}}_status">'
+	<?php //foreach ($this->getCustomerGroups() as $_groupId=>$_groupName): ?>
+	+ '<option value="<?php echo 'A';//$_groupId ?>"><?php echo Mage::helper('catalog')->__('Available');//$this->jsQuoteEscape($this->htmlEscape($_groupName)) ?></option>'
+	+ '<option value="<?php echo 'O';//$_groupId ?>"><?php echo Mage::helper('catalog')->__('Out');//$this->jsQuoteEscape($this->htmlEscape($_groupName)) ?></option>'
+	+ '<option value="<?php echo 'B';//$_groupId ?>"><?php echo Mage::helper('catalog')->__('Broken');//$this->jsQuoteEscape($this->htmlEscape($_groupName)) ?></option>'
+	+ '<option value="<?php echo 'M';//$_groupId ?>"><?php echo Mage::helper('catalog')->__('Maintenance');//$this->jsQuoteEscape($this->htmlEscape($_groupName)) ?></option>'
+	<?php //endforeach ?>
+	+ '</select></td>'
+	+ '<td class="last"><input type="hidden" name="<?php echo $_htmlName ?>[{{index}}][delete]" class="delete" value="" id="excludedates_row_{{index}}_delete" />'
+	+ '<button title="<?php echo Mage::helper('catalog')->__("Delete Tier") ?>" type="button" class="scalable delete icon-btn delete-product-option" id="serialnumbers_row_{{index}}_delete_button" onclick="return serialNumbersControl.deleteItem(event);">'
+	+ '<span><span><span><?php echo Mage::helper('catalog')->__("Delete") ?></span></span></span></button></td>'
+	+ '</tr>';
+
+var serialNumbersControl = {
+	template: new Template(serialNumbersRowTemplate, new RegExp('(^|.|\\r|\\n)({{\\s*(\\w+)\\s*}})', "")),
+	itemsCount: 0,
+	addItem : function () {
+		<?php if ($_readonly): ?>
+		if (arguments.length < 5) {
+			return;
+		}
+		<?php endif; ?>
+		var stockId = arguments[0];
+		var containerId = '<?php echo $_htmlId ?>_'+stockId+'_container';
+		var data = {
+			sn: '',
+			status: '<?php echo 'A'; ?>',
+			stockid: stockId,
+			readOnly: false,
+			index: this.itemsCount++
+		};
+
+		if(arguments.length >= 3) {
+			data.sn      = arguments[1];
+			data.status      = arguments[2];
+		}
+		if (arguments.length == 4) {
+			data.readOnly = arguments[3];
+		}
+
+		Element.insert($(containerId), {
+			bottom : this.template.evaluate(data)
+		});
+
+		$('serialnumbers_row_' + data.index + '_sn').value = data.sn;
+		$('serialnumbers_row_' + data.index + '_status').value = data.status;
+		$('serialnumbers_row_' + data.index + '_stockid').value = data.stockid;
+
+		if (data.readOnly == '1') {
+			['sn', 'status',  'delete', 'stockid'].each(function(idx){
+				$('serialnumbers_row_'+data.index+'_'+idx).disabled = true;
+			});
+			$('serialnumbers_row_'+data.index+'_delete_button').hide();
+		}
+
+		<?php if ($_readonly): ?>
+		$(containerId).select('input', 'select').each(this.disableElement);
+		$(containerId).up('table').select('button').each(this.disableElement);
+		<?php else: ?>
+		$(containerId).select('input', 'select').each(function(el){ Event.observe(el, 'change', el.setHasChanges.bind(el)); });
+		<?php endif; ?>
+	},
+	disableElement: function(el) {
+		el.disabled = true;
+		el.addClassName('disabled');
+	},
+	deleteItem: function(event) {
+		var tr = Event.findElement(event, 'tr');
+		if (tr) {
+			Element.select(tr, '.delete').each(function(elem){elem.value='1'});
+			Element.select(tr, ['input', 'select']).each(function(elem){elem.hide()});
+			Element.remove(tr);
+			//Element.addClassName(tr, 'no-display template');
+		}
+		return false;
+	}
+};
+<?php foreach ($this->getValues() as $_item): ?>
+serialNumbersControl.addItem('<?php echo $_item['stock_id']; ?>', '<?php echo $_item['sn']; ?>', '<?php echo $_item['status']; ?>', <?php echo (int)!empty($_item['readonly'])?>);
+<?php endforeach; ?>
+<?php if ($_readonly): ?>
+$('<?php echo $_htmlId ?>_container').up('table').select('button')
+	.each(serialNumbersControl.disableElement);
+<?php endif; ?>
+
+var getStockIdFromElement = function(el){
+	return $(el).up('table').readAttribute('stockid');
+};
+
+var addNewSerialNumber = function(buttonElement){
+	var stockId = getStockIdFromElement(buttonElement);
+	serialNumbersControl.addItem(stockId);
+};
+
+function triggerEventProtoype(element, eventName) {
+	// safari, webkit, gecko
+	if (document.createEvent)
+	{
+		var evt = document.createEvent('HTMLEvents');
+		evt.initEvent(eventName, true, true);
+
+		return element.dispatchEvent(evt);
+	}
+
+	// Internet Explorer
+	if (element.fireEvent) {
+		return element.fireEvent('on' + eventName);
+	}
+}
+
+document.observe("dom:loaded", function() {
+	$$('.generateBut').each(function(link) {
+		link.observe("click", function(event) {
+			var stockId = getStockIdFromElement(link);
+			var nrToGen = $('genInput-'+stockId).getValue();
+
+			if(!(!isNaN(parseFloat(nrToGen)) && isFinite(nrToGen))){
+				nrToGen = 1;
+			}
+
+			var reloadurl = '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/generateserials/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>';
+
+			Element.show('loading-mask');
+			var sn_ids = new Array();
+			$$('.sn').each( function(field) {
+				//alert('a');
+				//alert(field.value);
+				sn_ids.push(field.value);
+			});
+			//alert(sn_ids[0]);
+			new Ajax.Request(reloadurl, {
+				method: 'post',
+				parameters: {
+					'nr':nrToGen,
+					'sns[]' : sn_ids
+				},
+				onSuccess: function(transport) {
+
+					Element.hide('loading-mask');
+
+					var json = transport.responseText.evalJSON();
+					for(var i=0;i<json.sn.length;i++){
+						serialNumbersControl.addItem(stockId, json.sn[i], 'A' ,false);
+					}
+
+				}
+			});
+			event.stop();
+		});
+	});
+
+
+	<?php // TODO: these scrips should be moved, they don't belong here ?>
+	//	Element.hide('product_info_tabs_inventory');  // hiden due to inventory center module
+	<?php if(Mage::app()->getRequest()->getParam('detailsonly')): ?>
+	$jppr('#product_info_tabs li a.tab-item-link').hide();
+	$jppr('.header').hide();
+	$jppr('#product_info_tabs li a[title="General"]').show();
+	$jppr('#product_info_tabs_Payperrentals').show();
+	<?php endif	?>
+
+	/*
+	 * Modify default values. Right now I don't have a faster alternative
+	 * */
+	$('global_min_period').observe("change", function(event) {
+		if($F('global_min_period') == '1'){
+			$('payperrentals_min_number').writeAttribute('readonly','readonly');
+			$('payperrentals_min_number').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$('payperrentals_min_type').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$$('select#payperrentals_min_type option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.writeAttribute("disabled", "disabled");
+				}
+			});
+
+			//$('payperrentals_min_type').writeAttribute('readonly','readonly');
+		}else{
+			$('payperrentals_min_number').removeAttribute('readonly');
+			$('payperrentals_min_number').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$('payperrentals_min_type').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$$('select#payperrentals_min_type option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.removeAttribute("disabled");
+				}
+			});
+			//$('payperrentals_min_type').removeAttribute('readonly');
+
+		}
+	});
+	if($F('global_min_period') == '1'){
+		$('payperrentals_min_number').writeAttribute('readonly','readonly');
+		$('payperrentals_min_number').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$('payperrentals_min_type').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$$('select#payperrentals_min_type option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.writeAttribute("disabled", "disabled");
+			}
+		});
+
+	}else{
+		$('payperrentals_min_number').removeAttribute('readonly');
+		$('payperrentals_min_number').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$('payperrentals_min_type').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$$('select#payperrentals_min_type option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.removeAttribute("disabled");
+			}
+		});
+
+	}
+
+	/*max period*/
+	$('global_max_period').observe("change", function(event) {
+		if($F('global_max_period') == '1'){
+			$('payperrentals_max_number').writeAttribute('readonly','readonly');
+			$('payperrentals_max_number').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$('payperrentals_max_type').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$$('select#payperrentals_max_type option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.writeAttribute("disabled", "disabled");
+				}
+			});
+
+			//$('payperrentals_min_type').writeAttribute('readonly','readonly');
+		}else{
+			$('payperrentals_max_number').removeAttribute('readonly');
+			$('payperrentals_max_number').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$('payperrentals_max_type').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$$('select#payperrentals_max_type option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.removeAttribute("disabled");
+				}
+			});
+			//$('payperrentals_min_type').removeAttribute('readonly');
+
+		}
+	});
+	if($F('global_max_period') == '1'){
+		$('payperrentals_max_number').writeAttribute('readonly','readonly');
+		$('payperrentals_max_number').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$('payperrentals_max_type').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$$('select#payperrentals_max_type option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.writeAttribute("disabled", "disabled");
+			}
+		});
+
+	}else{
+		$('payperrentals_max_number').removeAttribute('readonly');
+		$('payperrentals_max_number').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$('payperrentals_max_type').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$$('select#payperrentals_max_type option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.removeAttribute("disabled");
+			}
+		});
+
+	}
+
+	/*turnoverbefore*/
+
+	$('global_turnover_before').observe("change", function(event) {
+		if($F('global_turnover_before') == '1'){
+			$('payperrentals_avail_numberb').writeAttribute('readonly','readonly');
+			$('payperrentals_avail_numberb').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$('payperrentals_avail_typeb').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$$('select#payperrentals_avail_typeb option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.writeAttribute("disabled", "disabled");
+				}
+			});
+
+			//$('payperrentals_min_type').writeAttribute('readonly','readonly');
+		}else{
+			$('payperrentals_avail_numberb').removeAttribute('readonly');
+			$('payperrentals_avail_numberb').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$('payperrentals_avail_typeb').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$$('select#payperrentals_avail_typeb option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.removeAttribute("disabled");
+				}
+			});
+			//$('payperrentals_min_type').removeAttribute('readonly');
+
+		}
+	});
+	if($F('global_turnover_before') == '1'){
+		$('payperrentals_avail_numberb').writeAttribute('readonly','readonly');
+		$('payperrentals_avail_numberb').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$('payperrentals_avail_typeb').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$$('select#payperrentals_avail_typeb option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.writeAttribute("disabled", "disabled");
+			}
+		});
+
+		//$('payperrentals_min_type').writeAttribute('readonly','readonly');
+	}else{
+		$('payperrentals_avail_numberb').removeAttribute('readonly');
+		$('payperrentals_avail_numberb').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$('payperrentals_avail_typeb').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$$('select#payperrentals_avail_typeb option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.removeAttribute("disabled");
+			}
+		});
+		//$('payperrentals_min_type').removeAttribute('readonly');
+
+	}
+
+	/*turnover after*/
+	$('global_turnover_after').observe("change", function(event) {
+		if($F('global_turnover_after') == '1'){
+			$('payperrentals_avail_number').writeAttribute('readonly','readonly');
+			$('payperrentals_avail_number').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$('payperrentals_avail_type').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$$('select#payperrentals_avail_type option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.writeAttribute("disabled", "disabled");
+				}
+			});
+
+			//$('payperrentals_min_type').writeAttribute('readonly','readonly');
+		}else{
+			$('payperrentals_avail_number').removeAttribute('readonly');
+			$('payperrentals_avail_number').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$('payperrentals_avail_type').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$$('select#payperrentals_avail_type option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.removeAttribute("disabled");
+				}
+			});
+			//$('payperrentals_min_type').removeAttribute('readonly');
+
+		}
+	});
+	if($F('global_turnover_after') == '1'){
+		$('payperrentals_avail_number').writeAttribute('readonly','readonly');
+		$('payperrentals_avail_number').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$('payperrentals_avail_type').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$$('select#payperrentals_avail_type option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.writeAttribute("disabled", "disabled");
+			}
+		});
+
+		//$('payperrentals_min_type').writeAttribute('readonly','readonly');
+	}else{
+		$('payperrentals_avail_number').removeAttribute('readonly');
+		$('payperrentals_avail_number').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$('payperrentals_avail_type').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$$('select#payperrentals_avail_type option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.removeAttribute("disabled");
+			}
+		});
+		//$('payperrentals_min_type').removeAttribute('readonly');
+
+	}
+
+	/*exclude days*/
+
+	$('global_excludedays').observe("change", function(event) {
+		if($F('global_excludedays') == '1'){
+			$('res_excluded_daysweek').setStyle({
+				backgroundColor: '#cccccc'
+			});
+			$$('select#res_excluded_daysweek option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.writeAttribute("disabled", "disabled");
+				}
+			});
+
+		}else{
+			$('res_excluded_daysweek').setStyle({
+				backgroundColor: '#ffffff'
+			});
+			$$('select#res_excluded_daysweek option').each(function(field){
+				if(!field.hasAttribute('selected')){
+					field.removeAttribute("disabled");
+				}
+			});
+		}
+	});
+	if($F('global_excludedays') == '1'){
+		$('res_excluded_daysweek').setStyle({
+			backgroundColor: '#cccccc'
+		});
+		$$('select#res_excluded_daysweek option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.writeAttribute("disabled", "disabled");
+			}
+		});
+
+	}else{
+		$('res_excluded_daysweek').setStyle({
+			backgroundColor: '#ffffff'
+		});
+		$$('select#res_excluded_daysweek option').each(function(field){
+			if(!field.hasAttribute('selected')){
+				field.removeAttribute("disabled");
+			}
+		});
+	}
+	/*End modify default value*/
+	$('payperrentals_use_serials').observe("change", function(event) {
+		//$jppr('#payperrentals_use_serials').change(function(){
+		if($F(payperrentals_use_serials) == '0'){
+			$$('table#serialnumbers_table button').each(function(field){
+				field.writeAttribute('disabled', 'disabled');
+				if(!field.hasClassName('disabled')){
+					field.toggleClassName('disabled');
+				}
+
+			});
+
+			$$('table#serialnumbers_table input').each(function(field){
+				field.writeAttribute('readonly', 'readonly');
+			});
+
+		}else{
+
+			$$('table#serialnumbers_table button').each(function(field){
+				if(field.hasAttribute('disabled')){
+					field.removeAttribute("disabled");
+				}
+				//field.removeAttribute('disabled');
+				if(field.hasClassName('disabled')){
+					field.toggleClassName('disabled');
+				}
+			});
+
+			$$('table#serialnumbers_table input').each(function(field){
+				if(field.hasAttribute('readonly')){
+					field.removeAttribute('readonly');
+				}
+			});
+
+			//$$('button#serialnumbers_table').removeAttribute('disabled');
+			//$$('button#serialnumbers_table').toggleClassName('disabled');
+			//$$('input#serialnumbers_table').removeAttribute('readonly');
+		}
+	});
+	triggerEventProtoype($('payperrentals_use_serials'),'change');
+});
+</script>
+
+
+
+

@@ -1,0 +1,127 @@
+<?php /* @var $this ITwebexperts_PPRWarehouse_Block_Adminhtml_Sales_Order_Return_Create_Form */ ?>
+<form id="edit_form" method="post" action="<?php echo $this->getSaveUrl() ?>">
+	<?php echo $this->getBlockHtml('formkey')?>
+	<?php  $_order = $this->getOrder() ?>
+	<?php echo $this->getChildHtml('order_info') ?>
+
+
+	<div class="box-left">
+		<!--Billing Address-->
+		<div class="entry-edit">
+			<div class="entry-edit-head">
+				<h4 class="icon-head head-payment-method"><?php echo Mage::helper('sales')->__('Payment Information') ?></h4>
+			</div>
+			<fieldset>
+				<div><?php echo $this->getPaymentHtml() ?></div>
+				<div><?php echo Mage::helper('sales')->__('The order was placed using %s', $_order->getOrderCurrencyCode()) ?></div>
+			</fieldset>
+		</div>
+	</div>
+	<div class="box-right">
+		<!--Shipping Address-->
+		<div class="entry-edit">
+			<div class="entry-edit-head">
+				<h4 class="icon-head head-shipping-method"><?php echo Mage::helper('sales')->__('Shipping Information') ?></h4>
+			</div>
+			<fieldset>
+				<div>
+					<strong><?php echo $this->escapeHtml($_order->getShippingDescription()) ?></strong>
+					<?php echo $this->helper('sales')->__('Total Shipping Charges'); ?>:
+
+					<?php if ($this->helper('tax')->displayShippingPriceIncludingTax()): ?>
+						<?php $_excl = $this->displayShippingPriceInclTax($_order); ?>
+					<?php else: ?>
+						<?php $_excl = $this->displayPriceAttribute('shipping_amount', false, ' '); ?>
+					<?php endif; ?>
+					<?php $_incl = $this->displayShippingPriceInclTax($_order); ?>
+
+					<?php echo $_excl; ?>
+					<?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
+						(<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
+					<?php endif; ?>
+				</div>
+			</fieldset>
+		</div>
+	</div>
+	<div class="clear"></div>
+
+	<div class="entry-edit">
+		<div class="entry-edit-head">
+			<h4 class="icon-head head-products"><?php echo Mage::helper('pprwarehouse')->__('Shipments to Return') ?></h4>
+		</div>
+	</div>
+	<div id="shipment_items_container">
+		<div class="grid">
+		<table cellspacing="0" class="data order-tables">
+			<colgroup>
+				<col width="1">
+				<col>
+				<!-- Warehouse -->
+				<col width="1">
+				<!-- End Warehouse -->
+				<col>
+				<col width="1">
+				<col width="1">
+			</colgroup><thead>
+			<tr class="headings">
+				<th>Return</th>
+				<th>Product</th>
+
+				<!-- Warehouse -->
+				<th>Warehouse</th>
+				<!-- End Warehouse -->
+				<th class="a-center">Sent Date</th>
+				<th class="a-center">Qty</th>
+				<th class="last"><span class="nobr">Serial Numbers</span></th>
+			</tr>
+			</thead>
+			<tbody class="odd">
+			<?php foreach($this->getSentItems() as $sentItem): ?>
+			<?php /** @var $_product Mage_Catalog_Model_Product */ ?>
+			<?php $_product = $this->getProductFromSentItem($sentItem) ?>
+			<?php $_warehouse = $this->getWarehouseSentItem($sentItem) ?>
+			<?php $_serialNumbers = $sentItem->getSn() ? explode(',', $sentItem->getSn()) : array() ?>
+			<tr class="border">
+				<td>
+					<input type="checkbox" name="send_items[]" value="<?php echo $sentItem->getId() ?>"/>
+				</td>
+				<td>
+					<h5 class="title"><span><?php echo $this->escapeHtml($_product->getName()) ?></span></h5>
+					<div>
+						<strong>SKU:</strong><?php echo $this->escapeHtml($_product->getSku()) ?>
+					</div>
+				</td>
+
+				<!-- Warehouse -->
+				<td class="a-left"><?php echo $this->escapeHtml($_warehouse) ?></td>
+				<!-- End Warehouse -->
+
+				<td>
+					<?php echo ITwebexperts_Payperrentals_Helper_Data::formatDbDate($sentItem->getSendDate(),false,true); ?>
+				</td>
+
+				<td>
+					<?php echo $sentItem->getQty() ?>
+				</td>
+				<td class="last a-center">
+					<table cellspacing="0" class="qty-table">
+						<tbody>
+						<?php foreach($_serialNumbers as $_sn): ?>
+						<tr>
+							<td><?php echo $this->escapeHtml($_sn) ?></td>
+						</tr>
+						<?php endforeach ?>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+			<?php endforeach ?>
+			</tbody>
+		</table>
+		</div>
+		<div class="a-right">
+			<button title="Submit Shipment" type="submit" class="scalable save submit-button" style=""><span><span><span>Submit Return</span></span></span></button>
+		</div>
+	</div>
+</form>
+

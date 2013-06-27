@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <ITwebexperts_PPRWarehouse>
+            <active>true</active>
+            <codePool>local</codePool>
+            <depends>
+                <ITwebexperts_Payperrentals/>
+                <Innoexts_Warehouse/>
+
+            </depends>
+        </ITwebexperts_PPRWarehouse>
+    </modules>
+</config>

@@ -1,0 +1,37 @@
+<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Items_Renderer_Default */ ?>
+<?php /* @var $this Mage_Adminhtml_Block_Sales_Items_Renderer_Default */ ?>
+
+<!-- Warehouse -->
+<?php $helper                       = $this->helper('warehouse') ?>
+<!-- End Warehouse -->
+
+<?php $_item = $this->getItem() ?>
+<tr class="border">
+	<td><?php echo $this->getColumnHtml($_item, 'name') ?></td>
+
+	<!-- Warehouse -->
+	<td class="a-left">
+		<?php if ($_item->getWarehouse()) : ?>
+			<?php echo $_item->getWarehouseTitle() ?>
+		<?php else : ?>
+			<?php echo $helper->__('No warehouse') ?>
+		<?php endif; ?>
+	</td>
+	<!-- End Warehouse -->
+
+	<td><?php echo $this->getColumnHtml($_item, 'qty') ?></td>
+
+	<td class="<?php if ($this->isShipmentRegular()): ?>last<?php endif; ?> a-center">
+		<?php if ($this->canShipPartiallyItem()): ?>
+			<input type="text" class="input-text<?php if(Mage::helper('pprwarehouse')->isReservationProduct($_item->getOrderItem())): ?> reservation-item<?php endif ?>" name="shipment[items][<?php echo $_item->getOrderItemId() ?>]" value="<?php echo $_item->getQty()*1 ?>" />
+		<?php else: ?>
+			<?php echo $_item->getQty()*1 ?>
+		<?php endif; ?>
+	</td>
+	<?php if (!$this->canShipPartiallyItem()): ?>
+		<td class="a-center last">
+			<input type="hidden" name="shipment[items][<?php echo $_item->getOrderItemId() ?>]" value="0" />
+			<input type="checkbox" name="shipment[items][<?php echo $_item->getOrderItemId() ?>]" value="<?php echo $_item->getQty()*1 ?>" checked />
+		</td>
+	<?php endif; ?>
+</tr>

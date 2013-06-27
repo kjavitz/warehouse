@@ -1,0 +1,57 @@
+<?php
+/** @var $this ITwebexperts_PPRWarehouse_Block_Warehouse_Adminhtml_Catalog_Product_Edit_Tab_Inventory_Renderer */
+?>
+
+<?php $helper               = $this->helper('warehouse') ?>
+<?php $element              = $this->getElement(); ?>
+<?php $product              = $this->getProduct(); ?>
+<?php $elementHtmlId        = $element->getHtmlId(); ?>
+<?php $elementName          = $element->getName(); ?>
+<?php $elementClass         = $element->getClass(); ?>
+<?php $isComposite          = $product->isComposite(); ?>
+<?php $canUseQtyDecimals    = $product->getTypeInstance()->canUseQtyDecimals(); ?>
+
+<tr>
+	<td class="value" colspan="3">
+		<div id="<?php echo $elementHtmlId ?>">
+			<div class="grid">
+				<table cellspacing="0" class="data border" id="<?php echo $elementHtmlId ?>_grid" width="100%">
+					<col/>
+					<?php if (!$isComposite) : ?>
+						<col width="85"/>
+					<?php endif; ?>
+					<thead>
+					<tr class="headings">
+						<th title="<?php echo $helper->__('Warehouse') ?>">
+							<?php echo $helper->__('Warehouse') ?>
+						</th>
+						<?php if (!$isComposite) : ?>
+							<th title="<?php echo $helper->__('Qty') ?>">
+								<?php echo $helper->__('Qty') ?><br/>
+								<?php echo $helper->__('[GLOBAL]') ?>
+							</th>
+						<?php endif; ?>
+					</tr>
+					</thead>
+					<tbody id="<?php echo $elementHtmlId ?>_list">
+					<?php foreach ($this->getValues() as $item) : ?>
+						<?php $stockId = $item['stock_id']; ?>
+						<tr>
+							<td>
+								<input type="hidden" name="<?php echo $elementName ?>[<?php echo $stockId ?>][stock_id]" value="<?php echo $stockId ?>"/>
+								<?php echo $helper->getWarehouseTitleByStockId($stockId) ?>
+							</td>
+							<?php if(!$isComposite): ?>
+								<td class="nobr">
+									<input type="hidden" name="<?php echo $elementName ?>[<?php echo $stockId ?>][original_inventory_qty]" value="<?php echo $item['qty'] ?>"/>
+									<input class="<?php echo $elementClass ?> qty required-entry validate-number" type="text" name="<?php echo $elementName ?>[<?php echo $stockId ?>][qty]" value="<?php echo $item['qty'] ?>"/>
+								</td>
+							<?php endif; ?>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</td>
+</tr>
