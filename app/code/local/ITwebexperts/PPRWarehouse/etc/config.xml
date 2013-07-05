@@ -54,11 +54,6 @@
                     <adminhtml_quantityreport>ITwebexperts_PPRWarehouse_Block_Payperrentals_Adminhtml_Quantityreport</adminhtml_quantityreport>
                 </rewrite>
             </payperrentals>
-            <adminhtml>
-                <rewrite>
-                    <sales_order_grid>ITwebexperts_PPRWarehouse_Block_Adminhtml_Sales_Order_Grid</sales_order_grid>
-                </rewrite>
-            </adminhtml>
         </blocks>
         <helpers>
             <pprwarehouse>
