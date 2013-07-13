@@ -483,7 +483,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 					while( ! $isAvailable){
 						foreach($stockIds as $stockId)
 						{
-							$isAvailableArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailableWithQty($Product->getId(), $qty, $startingDate, $endingDate, $stockId);
+							$isAvailableArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailableWithQty($Product->getId(), $startingDate, $endingDate, $stockId);
 							$isAvailable = $isAvailableArr['avail'];
 							if($isAvailable){
 								break;

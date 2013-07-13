@@ -96,6 +96,15 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
 		if(!$this->getRequest()->getParam('product_id')) {
 			return;
 		}
+
+
+		$stockId = $this->getRequest()->getParam('stock_id');
+		if( ! $stockId){
+			/** @var Innoexts_Warehouse_Helper_Data $helper */
+			$helper = Mage::helper('warehouse');
+			$stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
+		}
+
 		$Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));
 		if($Product->isConfigurable()){
 			$Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
@@ -336,7 +345,10 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
 		}
 
 		if(isset($pid)){
-			$maxQty = intval($stockArr[$pid]['avail']/ intval(($stockArr[$pid]['avail'] - $stockRest)/$qty1));
+			// what is this?????????? this should be SO easy why everything is done so complex everywhere! KISS principle !!!
+			if($qty1 && ($stockArr[$pid]['avail'] - $stockRest)){
+				$maxQty = intval($stockArr[$pid]['avail']/ intval(($stockArr[$pid]['avail'] - $stockRest)/$qty1));
+			}
 		}
 
 		if(count($stockArr) > 1){

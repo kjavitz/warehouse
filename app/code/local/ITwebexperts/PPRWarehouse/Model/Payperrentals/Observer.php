@@ -654,7 +654,7 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
 
 					$id = $item->getProduct()->getId();
 
-					if((!isset($updateItemsArr['action']) || $updateItemsArr['action'] != 'remove') && !ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailable($id, $qty, $start_date, $end_date)){
+					if((!isset($updateItemsArr['action']) || $updateItemsArr['action'] != 'remove') && !ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailable($id, $start_date, $end_date, $qty)){
 						Mage::throwException('Product '.$item->getProduct()->getName().' is not available for that qty on the selected dates');
 						return;
 					}

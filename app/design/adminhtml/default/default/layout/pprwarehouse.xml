@@ -84,4 +84,41 @@
         </reference>
     </payperrentals_adminhtml_quantityreport_index>
 
+
+    <adminhtml_sales_order_create_index>
+        <reference name="data">
+            <action method="setTemplate">
+                <template>pprwarehouse/sales/order/create/data.phtml</template>
+            </action>
+        </reference>
+        <reference name="items_grid">
+            <action method="setTemplate">
+                <template>pprwarehouse/sales/order/create/items/grid.phtml</template>
+            </action>
+        </reference>
+    </adminhtml_sales_order_create_index>
+
+
+    <PRODUCT_TYPE_reservation>
+        <reference name="product.composite.fieldset.reservation">
+            <action method="setTemplate">
+                <template>pprwarehouse/product/composite/fieldset/options/reservation.phtml</template>
+            </action>
+        </reference>
+    </PRODUCT_TYPE_reservation>
+    <PRODUCT_TYPE_configurable>
+        <reference name="product.composite.fieldset.reservation">
+            <action method="setTemplate">
+                <template>pprwarehouse/product/composite/fieldset/options/reservation.phtml</template>
+            </action>
+        </reference>
+    </PRODUCT_TYPE_configurable>
+    <PRODUCT_TYPE_bundle>
+        <reference name="product.composite.fieldset.reservation">
+            <action method="setTemplate">
+                <template>pprwarehouse/product/composite/fieldset/options/reservation.phtml</template>
+            </action>
+        </reference>
+    </PRODUCT_TYPE_bundle>
+
 </layout>

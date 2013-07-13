@@ -41,10 +41,12 @@ class ITwebexperts_PPRWarehouse_Helper_Data extends Mage_Core_Helper_Abstract
 	}
 
 
-	public function getValidStockIds()
+	public function getValidStockIds($quote = null)
 	{
 		$helper = Mage::helper('warehouse')->getCatalogInventoryHelper();
-		$quote = Mage::helper('checkout')->getQuote();
+		if( ! $quote){
+			$quote = Mage::helper('checkout')->getQuote();
+		}
 		// $stockData = Mage::helper('warehouse')->getQuoteHelper()->getStockData($quote);
 		$currentQuoteStockId = Mage::helper('pprwarehouse')->getCurrentQuoteStock();
 		return $currentQuoteStockId && $quote->getItemsCount() ? array($currentQuoteStockId) : $helper->getStockIds();

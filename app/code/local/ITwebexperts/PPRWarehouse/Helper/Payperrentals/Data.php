@@ -258,7 +258,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 	 * @param bool $returnQty	when true $stockID must not be null
 	 * @return bool
 	 */
-	public static function isAvailable($productId, $qty=1, $start_date, $end_date, $stockId = null, $returnQty = false)
+	public static function isAvailable($productId, $start_date, $end_date, $qty=1, $stockId = null, $returnQty = false)
 	{
 		if($returnQty && ! $stockId){
 			Mage::throwException('StockId is required when the qty is requested in isAvailable');
@@ -341,7 +341,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 
 	public static function isAvailableWithQty($productId, $qty=1, $start_date, $end_date, $stockId = null)
 	{
-		return ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailable($productId, $qty=1, $start_date, $end_date, $stockId, true);
+		return ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailable($productId, $start_date, $end_date, $qty, $stockId, true);
 	}
 
 
