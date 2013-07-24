@@ -97,6 +97,52 @@
             </action>
         </reference>
     </adminhtml_sales_order_create_index>
+        <!--Load Blocks-->
+    <adminhtml_sales_order_create_load_block_data>
+        <reference name="items_grid">
+            <action method="setTemplate">
+                <template>pprwarehouse/sales/order/create/items/grid.phtml</template>
+            </action>
+        </reference>
+
+        <reference name="search">
+            <action method="unsetChild">
+                <name>grid</name>
+            </action>
+            <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
+        </reference>
+        <reference name="data">
+            <action method="setTemplate">
+                <template>pprwarehouse/sales/order/create/data.phtml</template>
+            </action>
+        </reference>
+    </adminhtml_sales_order_create_load_block_data>
+    <adminhtml_sales_order_create_load_block_search>
+
+        <reference name="search">
+            <action method="unsetChild">
+                <name>grid</name>
+            </action>
+            <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
+        </reference>
+    </adminhtml_sales_order_create_load_block_search>
+    <adminhtml_sales_order_create_load_block_search_grid>
+
+        <reference name="content">
+            <action method="unsetChild">
+                <name>grid</name>
+            </action>
+            <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
+        </reference>
+    </adminhtml_sales_order_create_load_block_search_grid>
+
+    <adminhtml_sales_order_create_load_block_items>
+        <reference name="items_grid">
+            <action method="setTemplate">
+                <template>pprwarehouse/sales/order/create/items/grid.phtml</template>
+            </action>
+        </reference>
+    </adminhtml_sales_order_create_load_block_items>
 
 
     <PRODUCT_TYPE_reservation>
