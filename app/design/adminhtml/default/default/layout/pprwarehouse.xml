@@ -105,12 +105,13 @@
             </action>
         </reference>
 
-        <reference name="search">
+        <!--Block not available in system-->
+        <!--<reference name="search">
             <action method="unsetChild">
                 <name>grid</name>
             </action>
             <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
-        </reference>
+        </reference>-->
         <reference name="data">
             <action method="setTemplate">
                 <template>pprwarehouse/sales/order/create/data.phtml</template>
@@ -118,22 +119,22 @@
         </reference>
     </adminhtml_sales_order_create_load_block_data>
     <adminhtml_sales_order_create_load_block_search>
-
-        <reference name="search">
+        <!--Block not available in system-->
+        <!--<reference name="search">
             <action method="unsetChild">
                 <name>grid</name>
             </action>
             <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
-        </reference>
+        </reference>-->
     </adminhtml_sales_order_create_load_block_search>
     <adminhtml_sales_order_create_load_block_search_grid>
-
-        <reference name="content">
+        <!--Block not available in system-->
+        <!--<reference name="content">
             <action method="unsetChild">
                 <name>grid</name>
             </action>
             <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
-        </reference>
+        </reference>-->
     </adminhtml_sales_order_create_load_block_search_grid>
 
     <adminhtml_sales_order_create_load_block_items>
