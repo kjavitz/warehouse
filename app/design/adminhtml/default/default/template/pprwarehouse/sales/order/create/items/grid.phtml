@@ -28,22 +28,18 @@
 			<thead>
 			<tr class="headings">
 				<th class="no-link" style="min-width: 250px"><?php echo $this->helper('sales')->__('Product') ?></th>
-
-
-				<!-- Warehouse -->
-				<th class="no-link"><?php echo $helper->__('Warehouse') ?></th>
-				<!-- End Warehouse -->
+                <th class="no-link" style="min-width: 20px"><?php echo $this->helper('sales')->__('Configurate') ?></th>
 
 
 				<th class="no-link" style="min-width: 120px"><?php echo $this->helper('sales')->__('SKU') ?></th>
 				<?php
-				if(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STARTEND_SHOW_AS_COLUMNS) == 1){
-					?>
+				if(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STARTEND_SHOW_AS_COLUMNS) == 1): ?>
 					<th class="no-link"><?php echo $this->helper('sales')->__('Start') ?></th>
 					<th class="no-link"><?php echo $this->helper('sales')->__('End') ?></th>
-				<?php
-				}
-				?>
+                <?php endif; ?>
+                <!-- Warehouse -->
+                <th class="no-link"><?php echo $helper->__('Warehouse') ?></th>
+                <!-- End Warehouse -->
 				<th class="no-link"><?php echo $this->helper('sales')->__('Price') ?></th>
 				<th class="no-link"><?php echo $this->helper('sales')->__('Qty') ?></th>
 				<th class="no-link"><?php echo $this->helper('sales')->__('Subtotal') ?></th>
@@ -95,22 +91,16 @@
 	<thead>
 	<tr class="headings">
 		<th class="no-link" colspan="2"  style="min-width: 250px"><?php echo $this->helper('sales')->__('Product') ?></th>
-
-
-		<!-- Warehouse -->
-		<th class="no-link"><?php echo $helper->__('Warehouse') ?></th>
-		<!-- End Warehouse -->
-
-
+        <th class="no-link" style="min-width: 20px"><?php echo $this->helper('sales')->__('Configurate') ?></th>
 		<th class="no-link" style="min-width: 120px"><?php echo $this->helper('sales')->__('SKU') ?></th>
 		<?php
-		if(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STARTEND_SHOW_AS_COLUMNS) == 1){
-			?>
+		if(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STARTEND_SHOW_AS_COLUMNS) == 1): ?>
 			<th class="no-link"><?php echo $this->helper('sales')->__('Start') ?></th>
 			<th class="no-link"><?php echo $this->helper('sales')->__('End') ?></th>
-		<?php
-		}
-		?>
+		<?php endif; ?>
+        <!-- Warehouse -->
+        <th class="no-link"><?php echo $helper->__('Warehouse') ?></th>
+        <!-- End Warehouse -->
 		<th class="no-link"><?php echo $this->helper('sales')->__('Price') ?></th>
 		<th class="no-link"><?php echo $this->helper('sales')->__('Qty') ?></th>
 		<th class="no-link"><?php echo $this->helper('sales')->__('Subtotal') ?></th>
@@ -135,7 +125,6 @@
 				<?php
 				echo $this->formatPrice($this->getSubtotal() + $this->getDiscountAmount());
 				?></strong></td>
-		<td colspan="2">&nbsp;</td>
 	</tr>
 	</tfoot>
 	<?php $i=0 ?>
@@ -147,7 +136,6 @@
 			<h5 style="display:inline-block;vertical-align: middle;margin-right: 10px;width:180px;" class="title"><span id="order_item_<?php echo $_item->getId() ?>_title"><?php echo $this->htmlEscape($_item->getName()) ?></span></h5>
 			<!--<a href="#" class="customoptiontoggle" style="display:inline-block;vertical-align: middle;margin-right: 10px;"> +Custom Options</a>-->
 			<!--<span style="display:inline-block;vertical-align: middle;margin-right: 10px;"><?php echo $this->getConfigureButtonHtml($_item) ?></span>-->
-			<img alt="" onclick="<?php echo sprintf('order.showQuoteItemConfiguration(%s)', $_item->getId());?>;" id="configureImg" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/images/tools_icon_1.png';?>" style="cursor: pointer;display:inline-block;vertical-align: middle;width:16px;margin-right: 10px;"/>
 
 			<!--<div>
                                 <strong><?php echo $this->helper('sales')->__('SKU') ?>:</strong>
@@ -242,6 +230,7 @@
 
 			<?php endif; ?>
 		</td>
+        <td class="a-center"><img alt="" onclick="<?php echo sprintf('order.showQuoteItemConfiguration(%s)', $_item->getId());?>;" id="configureImg" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/images/tools_icon_1.png';?>" style="cursor: pointer;display:inline-block;vertical-align: middle;width:16px;margin-right: 10px;"/></td>
 
 
 		<td class="a-left"><?php echo implode('<br />', Mage::helper('catalog')->splitSku($this->escapeHtml($_item->getSku()))); ?></td>
