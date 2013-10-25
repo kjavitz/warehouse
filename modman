@@ -1,7 +1,43 @@
-app/code/local/ITwebexperts/PPRWarehouse app/code/local/ITwebexperts/PPRWarehouse
-app/design/adminhtml/default/default/layout/pprwarehouse.xml app/design/adminhtml/default/default/layout/pprwarehouse.xml
-app/design/adminhtml/default/default/template/pprwarehouse app/design/adminhtml/default/default/template/pprwarehouse
-app/design/frontend/base/default/layout/pprwarehouse.xml app/design/frontend/base/default/layout/pprwarehouse.xml
-app/design/frontend/base/default/template/pprwarehouse app/design/frontend/base/default/template/pprwarehouse
-app/etc/modules/ITwebexperts_PPRWarehouse.xml app/etc/modules/ITwebexperts_PPRWarehouse.xml
-skin/adminhtml/default/default/images/truck.png skin/adminhtml/default/default/images/truck.png
+app\code\local\ITwebexperts\PPRWarehouse\Block\Adminhtml\Grid\Column\Renderer\Warehouse.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Adminhtml\Sales\Order\Return\Create.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Adminhtml\Sales\Order\Return\Create\Form.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Payperrentals\Adminhtml\Quantityreport.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Payperrentals\Adminhtml\Catalog\Product\Edit\Tab\Payperrentals\Serialnumbers.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Payperrentals\Adminhtml\Html\Sendreturngridcustomer.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Payperrentals\Adminhtml\Html\Sendreturngridproduct.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Warehouse\Adminhtml\Catalog\Product\Edit\Tab\Inventory.php
+app\code\local\ITwebexperts\PPRWarehouse\Block\Warehouse\Adminhtml\Catalog\Product\Edit\Tab\Inventory\Renderer.php
+app\code\local\ITwebexperts\PPRWarehouse\controllers\AjaxController.php
+app\code\local\ITwebexperts\PPRWarehouse\controllers\Adminhtml\AjaxController.php
+app\code\local\ITwebexperts\PPRWarehouse\etc\config.xml
+app\code\local\ITwebexperts\PPRWarehouse\Helper\Data.php
+app\code\local\ITwebexperts\PPRWarehouse\Helper\Payperrentals\Data.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Observer.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\CatalogInventory\Observer.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\CatalogInventory\Stock.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\CatalogInventory\Stock\Item.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Payperrentals\Observer.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Payperrentals\Product\Backend\Serialnumbers.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Payperrentals\Product\Type\Configurable.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Payperrentals\Product\Type\Grouped.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Payperrentals\Product\Type\Reservation.php
+app\code\local\ITwebexperts\PPRWarehouse\Model\Sales\Quote\Item.php
+app\code\local\ITwebexperts\PPRWarehouse\sql\pprwarehouse_setup\install-0.1.0.php
+app\design\adminhtml\default\default\layout\pprwarehouse.xml
+app\design\adminhtml\default\default\template\pprwarehouse\qreport.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\catalog\product\edit\tab\inventory\renderer.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\catalog\product\edit\tab\inventory\serialnumbers.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\product\composite\fieldset\options\reservation.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\create\data.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\create\items\grid.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\return\create\form.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\shipment\create\items.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\shipment\create\items\renderer\default.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\view\items.phtml
+app\design\adminhtml\default\default\template\pprwarehouse\sales\order\view\items\renderer\default.phtml
+app\design\frontend\base\default\layout\pprwarehouse.xml
+app\design\frontend\base\default\template\pprwarehouse\bundle\sales\order\items\renderer.phtml
+app\design\frontend\base\default\template\pprwarehouse\sales\order\items\renderer.phtml
+app\design\frontend\base\default\template\pprwarehouse\sales\order\shipment\items\renderer.phtml
+app\etc\modules\ITwebexperts_PPRWarehouse.xml
+skin\adminhtml\default\default\images\truck.png
