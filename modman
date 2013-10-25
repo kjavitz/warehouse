@@ -1,0 +1,7 @@
+app/code/local/ITwebexperts/PPRWarehouse app/code/local/ITwebexperts/PPRWarehouse
+app/design/adminhtml/default/default/layout/pprwarehouse.xml app/design/adminhtml/default/default/layout/pprwarehouse.xml
+app/design/adminhtml/default/default/template/pprwarehouse app/design/adminhtml/default/default/template/pprwarehouse
+app/design/frontend/base/default/layout/pprwarehouse.xml app/design/frontend/base/default/layout/pprwarehouse.xml
+app/design/frontend/base/default/template/pprwarehouse app/design/frontend/base/default/template/pprwarehouse
+app/etc/modules/ITwebexperts_PPRWarehouse.xml app/etc/modules/ITwebexperts_PPRWarehouse.xml
+skin/adminhtml/default/default/images/truck.png skin/adminhtml/default/default/images/truck.png
