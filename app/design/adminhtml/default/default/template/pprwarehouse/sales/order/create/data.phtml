@@ -1,535 +1,598 @@
-<?php /** @var $this Mage_Adminhtml_Block_Sales_Order_Create_Data */ ?>
-
 <!-- Warehouse -->
 <?php $helper                       = $this->helper('warehouse') ?>
 <?php $config                       = $helper->getConfig() ?>
 <!-- End Warehouse -->
 
-<link rel="stylesheet" type="text/css" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/jqueryui/css/ui-lightness/jquery-ui-1.9.2.custom.css'; ?>" media="all" />
-<link rel="stylesheet" type="text/css" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/qtip/jquery.qtip.css'; ?>" media="all" />
-<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/jqueryui/js/jquery-1.8.3.js'; ?>"></script>
-<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/jqueryui/js/jquery-ui-1.9.2.custom.js'; ?>"></script>
-<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/qtip/jquery.qtip.js'; ?>"></script>
-<script type="text/javascript">
-	$jppr1 = jQuery.noConflict();
-</script>
+<!--<link rel="stylesheet" type="text/css" href="<?php /*echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/jqueryui/css/ui-lightness/jquery-ui-1.9.2.custom.css'; */?>" media="all"/>-->
+<link rel="stylesheet" type="text/css" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/qtip/jquery.qtip.css'; ?>" media="all"/>
+<!--<script type="text/javascript" src="<?php /*echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/jqueryui/js/jquery-1.8.3.js'; */?>"></script>-->
+<!--<script type="text/javascript" src="<?php /*echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/jqueryui/js/jquery-ui-1.9.2.custom.js'; */?>"></script>-->
+<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/qtip/jquery.qtip.js'; ?>"></script>
+<!--<script type="text/javascript">
+    $_jppr1 = jQuery.noConflict();
+</script>-->
 
 
 <div class="page-create-order">
 <div class="switcher">
-	<div style="display:inline-block;">
-		<label for="currency_switcher"><?php echo Mage::helper('sales')->__('Order Currency:') ?></label>
-		<select id="currency_switcher" name="order[currency]" onchange="order.setCurrencyId(this.value); order.setCurrencySymbol(this.options[this.selectedIndex].getAttribute('symbol'));">
-			<?php foreach ($this->getAvailableCurrencies() as $_code): ?>
-				<option value="<?php echo $_code ?>"<?php if($_code==$this->getCurrentCurrencyCode()): ?> selected="selected"<?php endif; ?> symbol="<?php echo $this->getCurrencySymbol($_code) ?>"><?php echo $this->getCurrencyName($_code) ?></option>
-			<?php endforeach; ?>
-		</select>
-	</div>
-	<?php
-	$noDates = false;
-	if(Mage::getSingleton('core/session')->getData('startDateInitial')){
-		$startDateInitArr = explode(' ', Mage::getSingleton('core/session')->getData('startDateInitial'));
-		$start_date = date('Y-m-d',strtotime($startDateInitArr[0]));
-		if(isset($startDateInitArr[1])){
-			$startTimeInit = $startDateInitArr[1];
-		}else{
-			$startTimeInit = '';
-		}
+    <div class="currency-switcher">
+        <label for="currency_switcher"><?php echo Mage::helper('payperrentals')->__('Order Currency') . ':' ?></label>
+        <select id="currency_switcher" name="order[currency]" onchange="order.setCurrencyId(this.value); order.setCurrencySymbol(this.options[this.selectedIndex].getAttribute('symbol'));">
+            <?php foreach ($this->getAvailableCurrencies() as $_code): ?>
+                <option value="<?php echo $_code ?>"<?php if ($_code == $this->getCurrentCurrencyCode()): ?> selected="selected"<?php endif; ?> symbol="<?php echo $this->getCurrencySymbol($_code) ?>"><?php echo $this->getCurrencyName($_code) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <?php $_storeOpen = Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_OPEN_TIME); ?>
+    <?php $_storeClose = Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_CLOSE_TIME); ?>
+    <?php $_noDates = false; ?>
+    <?php if (Mage::getSingleton('core/session')->getData('startDateInitial')): ?>
+        <?php $_startDateInitArr = explode(' ', Mage::getSingleton('core/session')->getData('startDateInitial')); ?>
+        <?php $_start_date = date('Y-m-d', strtotime($_startDateInitArr[0])); ?>
+        <?php if (isset($_startDateInitArr[1])): ?>
+            <?php $_startTimeInit = $_startDateInitArr[1]; ?>
+        <?php else: ?>
+            <?php $_startTimeInit = ''; ?>
+        <?php endif; ?>
 
-		$endDateInitArr = explode(' ', Mage::getSingleton('core/session')->getData('endDateInitial'));
-		$end_date = date('Y-m-d',strtotime($endDateInitArr[0]));
-		if(isset($endDateInitArr[1])){
-			$endTimeInit = $endDateInitArr[1];
-		}else{
-			$endTimeInit = '';
-		}
+        <?php $_endDateInitArr = explode(' ', Mage::getSingleton('core/session')->getData('endDateInitial')); ?>
+        <?php $_end_date = date('Y-m-d', strtotime($_endDateInitArr[0])); ?>
+        <?php if (isset($_endDateInitArr[1])): ?>
+            <?php $_endTimeInit = $_endDateInitArr[1]; ?>
+        <?php else: ?>
+            <?php $_endTimeInit = ''; ?>
+        <?php endif; ?>
 
-	}else{
-		$start_date = (date('Y-m-d'));
-		$end_date = (date('Y-m-d'));
-		$startTimeInit = '';
-		$endTimeInit = '';
-		$noDates = true;
-	}
+    <?php else: ?>
+        <?php $_start_date = (date('Y-m-d')); ?>
+        <?php $_end_date = (date('Y-m-d')); ?>
+        <?php $_startTimeInit = null; ?>
+        <?php $_endTimeInit = null; ?>
+        <?php $_noDates = true; ?>
+    <?php endif; ?>
+    <?php $_useTimes = 2; ?>
 
-	$storeOpen = 0;
-	$storeClose = 23;
+    <?php $_excludeHoursStart = array(); ?>
+    <?php $_excludeHoursEnd = array(); ?>
+    <?php $_exludeMinutesStart = array(); ?>
+    <?php $_exludeMinutesEnd = array(); ?>
 
-	/*if($quoteItemId){
-    $useTimes =ITwebexperts_Payperrentals_Helper_Data::useTimes($this->getProduct()->getId());
-
-    }else{
-    $useTimes = 0;
-    }*/
-	$useTimes = 2;
-
-	$excludeHoursStart = array();
-	$excludeHoursEnd = array();
-	$exludeMinutesStart = array();
-	$exludeMinutesEnd = array();
-	?>
-	<div id="topDates" style="display: inline-block;margin-left: 150px;">
-		<div class="datesInputsTop" style="display: none">
-			<div style="display: inline-block;margin-right:30px;">
-				<?php echo $this->__('From');?>
-				<input type="text" readonly="readonly" name="start_date" class="start_date" value="<?php echo $start_date;?>" >
-			</div>
-			<div style="display: inline-block;">
-				<?php echo $this->__('To');?>
-				<input type="text" readonly="readonly" name="end_date" class="end_date" value="<?php echo $end_date;?>" >
-			</div>
-		</div>
-		<div class="datesSelectorTop" style="display: inline-block">
-			<div style="display: inline-block;margin-right:30px;">
-				<label><?php echo $this->__('Start Date');?></label>
-				<input type="text" readonly="readonly" name="read_start_date" class="readStartDate" value="<?php echo date('Y-m-d',strtotime($start_date));?>"/>
-				<?php
-				$hourStart = ITwebexperts_Payperrentals_Helper_Timebox::getTimeInput('start_time', $storeOpen, $storeClose, $excludeHoursStart);
-				echo $this->__('Start Time:'). $hourStart;
-				?>
-			</div>
-			<div style="display: inline-block;">
-				<label><?php echo $this->__('End Date');?></label>
-				<input type="text" readonly="readonly" name="read_end_date" class="readEndDate" value="<?php echo date('Y-m-d',strtotime($end_date));?>"/>
-				<?php
-				$hourEnd = ITwebexperts_Payperrentals_Helper_Timebox::getTimeInput('end_time', $storeOpen, $storeClose, $excludeHoursEnd);
-				echo $this->__('End Time: ').$hourEnd;
-				?>
-			</div>
-		</div>
-	</div>
+    <div id="topDates" style="display: inline-block;margin-left: 10px;">
+        <div class="datesInputsTop" style="display: none">
+            <div style="display: inline-block;margin-right:30px;">
+                <?php echo $this->__('From'); ?>
+                <input type="text" readonly="readonly" name="start_date" class="start_date" value="<?php echo $_start_date; ?>">
+            </div>
+            <div style="display: inline-block;">
+                <?php echo $this->__('To'); ?>
+                <input type="text" readonly="readonly" name="end_date" class="end_date" value="<?php echo $_end_date; ?>">
+            </div>
+        </div>
+        <div class="datesSelectorTop">
+            <div class="start-time-line">
+                <div class="date-field">
+                    <label><?php echo $this->__('Start Date:'); ?></label>
+                    <input type="text" readonly="readonly" name="read_start_date" class="readStartDate" value="<?php echo date('Y-m-d', strtotime($_start_date)); ?>"/>
+                </div>
+                <div class="timeSelector">
+                    <div class="timesInputs">
+                        <?php $_hourStart = ITwebexperts_Payperrentals_Helper_Timebox::getTimeInput('start_time', $_storeOpen, $_storeClose, $_excludeHoursStart, $_startTimeInit); ?>
+                        <label for="start_time"><?php echo $this->__('Start Time:'); ?></label>
+                        <?php echo $_hourStart; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="end-time-line">
+                <div class="date-field">
+                    <label><?php echo $this->__('End Date:'); ?></label>
+                    <input type="text" readonly="readonly" name="read_end_date" class="readEndDate" value="<?php echo date('Y-m-d', strtotime($_end_date)); ?>"/>
+                </div>
+                <div class="timeSelector">
+                    <div class="timesInputs">
+                        <?php $_hourEnd = ITwebexperts_Payperrentals_Helper_Timebox::getTimeInput('end_time', $_storeOpen, $_storeClose, $_excludeHoursEnd, $_endTimeInit); ?>
+                        <label for="end_time"><?php echo $this->__('End Time:'); ?></label>
+                        <?php echo $_hourEnd; ?>
+                    </div>
+                </div>
+            </div>
+            <button class="scalable change" id="changeButton" type="button" style="display: inline-block;"><span><?php echo $this->__('Change All') ?></span></button>
+        </div>
+    </div>
 </div>
-<link rel="stylesheet" type="text/css" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/zebra/css/zebra_datepicker.css'; ?>" media="all" />
-<link rel="stylesheet" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.css'; ?>" />
-<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/jquery/jquery-1.7.1.min.js'; ?>"></script>
-<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/zebra/javascript/zebra_datepicker.js'; ?>"></script>
-<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.js'; ?>"></script>
+<link rel="stylesheet" type="text/css" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/zebra/css/zebra_datepicker.css'; ?>" media="all"/>
+<link rel="stylesheet" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.css'; ?>"/>
+<!--<script type="text/javascript" src="<?php /*echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/jquery/jquery-1.7.1.min.js'; */?>"></script>-->
+<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/zebra/javascript/zebra_datepicker.js'; ?>"></script>
+<script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) . 'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.js'; ?>"></script>
 <script type="text/javascript">
-	$jppr = jQuery.noConflict();
-
+    $_jppr = jQuery.noConflict();
 </script>
 <script type="text/javascript">
-	function print_r(theObj){
-		if(theObj.constructor == Array || theObj.constructor == Object){
-			document.write("<ul>")
-			for(var p in theObj){
-				if(theObj[p].constructor == Array || theObj[p].constructor == Object){
-					document.write("<li>["+p+"] => "+typeof(theObj)+"</li>");
-					document.write("<ul>")
-					print_r(theObj[p]);
-					document.write("</ul>")
-				} else {
-					document.write("<li>["+p+"] => "+theObj[p]+"</li>");
-				}
-			}
-			document.write("</ul>")
-		}
-	}
+function print_r(theObj) {
+    if (theObj.constructor == Array || theObj.constructor == Object) {
+        document.write("<ul>");
+        for (var p in theObj) {
+            if (theObj[p].constructor == Array || theObj[p].constructor == Object) {
+                document.write("<li>[" + p + "] => " + typeof(theObj) + "</li>");
+                document.write("<ul>");
+                print_r(theObj[p]);
+                document.write("</ul>")
+            } else {
+                document.write("<li>[" + p + "] => " + theObj[p] + "</li>");
+            }
+        }
+        document.write("</ul>")
+    }
+}
+function updateInitials() {
+    Element.show('loading-mask');
+    $_jppr.ajax({
+        cache: false,
+        dataType: 'json',
+        type: 'post',
+        url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/updateinitials/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
+        data: $_jppr('#topDates').find('*').serialize(),
+        success: function (data) {
+            Element.hide('loading-mask');
+            order.loadArea(['search'], true);
+        }
+    });
+}
 
-	function updateInputValsAll(){
-		Element.show('loading-mask');
-		$jppr.ajax({
-			cache: false,
-			dataType: 'json',
-			type: 'post',
-			url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getupdatealldates/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
-			data: $jppr('#topDates').find('*').serialize(),
-			success: function (data) {
-				Element.hide('loading-mask');
-				if(data.itemId){
-					$jppr.each(data.itemId, function(key, item) {
-						order.productConfigureAddFields['item['+item+'][configured]'] = 1;
-						$jppr.each(data.itemConfigs[item], function(keyConfig, itemConfig) {
+function updateInputValsAll() {
+    Element.show('loading-mask');
+    $_jppr.ajax({
+            cache: false,
+            dataType: 'json',
+            type: 'post',
+            url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getupdatealldates/", array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
+            data: $_jppr('#topDates').find('*').serialize(),
+            success: function (data) {
+                Element.hide('loading-mask');
+                if (data.itemId) {
+                    $_jppr.each(data.itemId, function (key1, item) {
+                        order.productConfigureAddFields['item[' + item + '][configured]'] = 1;
+                        $_jppr.each(data.itemConfigs[item], function (keyConfig, itemConfig) {
 
-							if(Object.prototype.toString.call(itemConfig) === '[object Object]'){
-								// alert(Array.prototype.slice.call(itemConfig));
-								for (var key in itemConfig) {
-									order.productConfigureAddFields['item['+item+']['+keyConfig+']['+key+']'] = itemConfig[key];
-								}
-								// arr = JSON.parse(itemConfig);
-								//alert(arr[3]);
-								//order.productConfigureAddFields['item['+item+']['+keyConfig+']'] = arr;
+                            if (Object.prototype.toString.call(itemConfig) === '[object Object]') {
+                                for (var key in itemConfig) {
+                                    order.productConfigureAddFields['item[' + item + '][' + keyConfig + '][' + key + ']'] = itemConfig[key];
+                                }
 
-								/*$jppr.each(itemConfig, function(keyConfig1, itemConfig1) {
-								 alert(keyConfig1+' '+itemConfig1);
-								 order.productConfigureAddFields['item['+item+']['+keyConfig+']'][keyConfig1] = itemConfig1;
-								 });*/
+                            } else {
+                                order.productConfigureAddFields['item[' + item + '][' + keyConfig + ']'] = itemConfig;
+                            }
+                        });
+                    });
+                    order.itemsUpdate();
+                }
+                order.loadArea(['items'], true);
+            }}
+    );
+}
 
-							}else{
-								order.productConfigureAddFields['item['+item+']['+keyConfig+']'] = itemConfig;
-							}
-						});
-					});
+$_jppr('#topDates .readStartDate').Zebra_DatePicker({
+    offset: [20, 250],
+    onSelect: function (date1, date2, date3) {
+        $_jppr('#topDates .start_date').val(date2);
+        updateInitials();
+    }
+});
 
-					order.itemsUpdate();
-				}
-			}
-		});
-	}
-	$jppr('#topDates .readStartDate').Zebra_DatePicker({
-		offset:[20,250],
-		onSelect:function(date1, date2, date3){
-			$jppr('#topDates .start_date').val(date2);
-			//$selfID.find('.readStartDate').val(date2);
-			updateInputValsAll();
-		}
-	});
-	$jppr('#topDates .readEndDate').Zebra_DatePicker({
-		offset:[20,250],
-		onSelect:function(date1, date2, date3){
-			$jppr('#topDates .end_date').val(date2);
-			//$selfID.find('.readEndDate').val(date2);
-			updateInputValsAll();
-		}
-	});
-	$jppr('.Zebra_DatePicker').css('z-index','10000');
-	function calculatePrice($selfID, itemId, wind){
-		var qtyDisabledArr = [];
-		$jppr('.qty-disabled').each(function(){
-			qtyDisabledArr.push($jppr(this).attr('id'));
-			$jppr(this).removeAttr('disabled');
-		});
-		if(typeof bundle !== 'undefined'){
-			for (var option in bundle.config.selected) {
-				if (bundle.config.options[option]) {
-					for (var i=0; i < bundle.config.selected[option].length; i++) {
-						if(bundle.config.options[option].selections[bundle.config.selected[option][i]].typeid == 'reservation'){
-							//alert( $jppr('input[name="bundle_option_qty['+option+']"]').attr('id'));
-							$jppr('input[name="bundle_option_qty['+option+']"]').attr('onblur', '');
-							$jppr('input[name="bundle_option_qty['+option+']"]').attr('onkeyup', '');
-						}
-					}
-				}
-			}
-		}
-		$jppr.ajax({
-			cache: false,
-			dataType: 'json',
-			type: 'post',
-			url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getprice/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey())) ?>'+'product_id/'+itemId,
-			data: $selfID.closest('form').find('*').serialize(),
-			success: function (data) {
-				/*for(var i1=0;i1<qtyDisabledArr.length;i1++){
-				 $jppr('#'+qtyDisabledArr[i1]).attr('disabled','disabled');
-				 }*/
-				$jppr('.qty-disabled').each(function(){
-					$jppr(this).attr('disabled','disabled');
-				});
-				if(data.needConfigure){
-					wind._showWindow();
-				}else{
-					productConfigure.onConfirmBtn();
-					//if(data.amount != '-1'){
-					$jppr('a[product_id="'+itemId+'"]').parent().parent().find('.price').html(data.formatAmount);
-					$jppr('a[product_id="'+itemId+'"]').parent().parent().find('.currentstock').html(data.stockAvail);
-					$jppr('a[product_id="'+itemId+'"]').parent().parent().find('.remainingstock').html(data.stockRest);
-					$jppr('a[product_id="'+itemId+'"]').parent().parent().find('.qty').change(function(){
-						$jppr('a[product_id="'+itemId+'"]').parent().parent().find('.remainingstock').html($jppr('a[product_id="'+itemId+'"]').parent().parent().find('.currentstock').html() - $jppr(this).val());
-					});
-				}
-				//}
-				//return false;
-			}
-		});
-	}
+$_jppr('#topDates .readEndDate').Zebra_DatePicker({
+    offset: [20, 250],
+    onSelect: function (date1, date2, date3) {
+        $_jppr('#topDates .end_date').val(date2);
+        updateInitials();
+    }
+});
+$_jppr('#topDates .start_time').change(function () {
+    updateInitials();
+});
+$_jppr('#topDates .end_time').change(function () {
+    updateInitials();
+});
+$_jppr('#changeButton').click(function () {
+    updateInputValsAll();
+});
 
-	ProductConfigure.prototype._requestItemConfiguration = ProductConfigure.prototype._requestItemConfiguration.wrap(function(parentMethod, listType, itemId){
-			if (!this.listTypes[listType].urlFetch) {
-				return false;
-			}
-			var url = this.listTypes[listType].urlFetch;
-			if (url) {
-				new Ajax.Request(url, {
-					parameters: {id: itemId},
-					onSuccess: function(transport) {
-						var response = transport.responseText;
-						if (response.isJSON()) {
-							response = response.evalJSON();
-							if (response.error) {
-								this.blockMsg.show();
-								this.blockMsgError.innerHTML = response.message;
-								this.blockCancelBtn.hide();
-								this.setConfirmCallback(listType, null);
-								//this._showWindow();
-								//check if item has different config options also check price
-								//alert(itemId);
-								//return current stock
-								// this.onConfirmBtn();
-								if(listType == 'product_to_add'){
-									var $selfID = $jppr('#calendarTable'+itemId);
-									calculatePrice($selfID,itemId,this );
-								}else{
-									this._showWindow();
-								}
 
-							}
-						} else if (response) {
-							response = response + '';
-							this.blockFormFields.update(response);
+$_jppr('.Zebra_DatePicker').css('z-index', '10000');
+function calculatePrice($_selfID, itemId, wind) {
+    var qtyDisabledArr = [];
+    $_jppr('.qty-disabled').each(function () {
+        qtyDisabledArr.push($_jppr(this).attr('id'));
+        $_jppr(this).removeAttr('disabled');
+    });
+    if (typeof bundle !== 'undefined') {
+        for (var option in bundle.config.selected) {
+            if (bundle.config.options[option]) {
+                for (var i = 0; i < bundle.config.selected[option].length; i++) {
+                    if (bundle.config.options[option].selections[bundle.config.selected[option][i]].typeid == 'reservation') {
+                        //alert( $_jppr('input[name="bundle_option_qty['+option+']"]').attr('id'));
+                        $_jppr('input[name="bundle_option_qty[' + option + ']"]').attr('onblur', '');
+                        $_jppr('input[name="bundle_option_qty[' + option + ']"]').attr('onkeyup', '');
+                    }
+                }
+            }
+        }
+    }
+    $_jppr.ajax({
+        cache: false,
+        dataType: 'json',
+        type: 'post',
+        url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getprice/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey())) ?>' + 'product_id/' + itemId,
+        data: $_jppr('#topDates').find('*').serialize(),
+        success: function (data) {
+            /*for(var i1=0;i1<qtyDisabledArr.length;i1++){
+             $_jppr('#'+qtyDisabledArr[i1]).attr('disabled','disabled');
+             }*/
+            $_jppr('.qty-disabled').each(function () {
+                $_jppr(this).attr('disabled', 'disabled');
+            });
+            if (data.needConfigure) {
+                wind._showWindow();
+            } else {
+                productConfigure.onConfirmBtn();
+                //if(data.amount != '-1'){
+                if ($_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.checkbox').attr('isadd') == '1') {
+                    $_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.checkbox').removeAttr('isadd');
+                    order.productGridAddSelected();
+                }
+                $_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.price').html(data.formatAmount);
+                $_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.currentstock').html(data.stockAvail);
+                $_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.remainingstock').html(data.stockRest);
+                $_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.qty').change(function () {
+                    $_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.remainingstock').html($_jppr('a[product_id="' + itemId + '"]').parent().parent().find('.currentstock').html() - $_jppr(this).val());
+                });
+            }
+            //}
+            //return false;
+        }
+    });
+}
 
-							// Add special div to hold mage data, e.g. scripts to execute on every popup show
-							var mageData = {};
-							var scripts = response.extractScripts();
-							mageData.scripts = scripts;
+ProductConfigure.prototype._requestItemConfiguration = ProductConfigure.prototype._requestItemConfiguration.wrap(function (parentMethod, listType, itemId) {
+        if (!this.listTypes[listType].urlFetch) {
+            return false;
+        }
+        var url = this.listTypes[listType].urlFetch;
+        if (url) {
+            new Ajax.Request(url, {
+                parameters: {id: itemId},
+                onSuccess: function (transport) {
+                    var response = transport.responseText;
+                    if (response.isJSON()) {
+                        response = response.evalJSON();
+                        if (response.error) {
+                            this.blockMsg.show();
+                            this.blockMsgError.innerHTML = response.message;
+                            this.blockCancelBtn.hide();
+                            this.setConfirmCallback(listType, null);
+                            //this._showWindow();
+                            //check if item has different config options also check price
+                            //alert(itemId);
+                            //return current stock
+                            // this.onConfirmBtn();
+                            if (listType == 'product_to_add') {
+                                var $_selfID = $_jppr('#calendarTable' + itemId);
+                                calculatePrice($_selfID, itemId, this);
+                            } else {
+                                this._showWindow();
+                            }
 
-							var scriptHolder = new Element('div', {'style': 'display:none'});
-							scriptHolder.mageData = mageData;
-							this.blockFormFields.insert(scriptHolder);
+                        }
+                    } else if (response) {
+                        response = response + '';
+                        this.blockFormFields.update(response);
 
-							// Show window
-							//this._showWindow();
-							//check if item has different config options also check price
-							//alert(itemId);
-							//return current stock
-							//this.onConfirmBtn();
-							if(listType == 'product_to_add'){
-								var $selfID = $jppr('#calendarTable'+itemId);
-								calculatePrice($selfID,itemId,this );
-							} else{
-								this._showWindow();
-							}
+                        // Add special div to hold mage data, e.g. scripts to execute on every popup show
+                        var mageData = {};
+                        var scripts = response.extractScripts();
+                        mageData.scripts = scripts;
 
-						}
-					}.bind(this)
-				});
-			}
+                        var scriptHolder = new Element('div', {'style': 'display:none'});
+                        scriptHolder.mageData = mageData;
+                        this.blockFormFields.insert(scriptHolder);
 
-		}
-	);
+                        // Show window
+                        //this._showWindow();
+                        //check if item has different config options also check price
+                        //alert(itemId);
+                        //return current stock
+                        //this.onConfirmBtn();
+                        if (listType == 'product_to_add') {
+                            var $_selfID = $_jppr('#calendarTable' + itemId);
+                            calculatePrice($_selfID, itemId, this);
+                        } else {
+                            this._showWindow();
+                        }
+
+                    }
+                }.bind(this)
+            });
+        }
+
+    }
+);
+
 </script>
 <style type="text/css">
-	button.Zebra_DatePicker_Icon{
-		text-indent: 0px;
-	}
-	.Zebra_DatePicker{
-		z-index:10000;
-	}
-	.datesInputsTop{
-		display: none;
-	}
+    button.Zebra_DatePicker_Icon {
+        text-indent: 0px;
+    }
+
+    .Zebra_DatePicker {
+        z-index: 10000;
+    }
+
+    .datesInputsTop {
+        display: none;
+    }
 </style>
 
 <script type="text/javascript">order.setCurrencySymbol('<?php echo $this->getCurrencySymbol($this->getCurrentCurrencyCode()) ?>')</script>
-
-
 <!-- Warehouse -->
 <?php if (!$config->isMultipleMode()) : ?>
-	<?php $stockId = $this->getCreateOrderModel()->getStockId(); ?>
-	<p class="switcher">
-		<label for="stock_switcher"><?php echo $helper->__('Warehouse:') ?></label>
-		<select id="stock_switcher" name="order[stock_id]" onchange="order.setStockId(this.value);">
-			<?php foreach ($helper->getWarehouses() as $warehouse): ?>
-				<option value="<?php echo $warehouse->getStockId() ?>"<?php if ($warehouse->getStockId() == $stockId) : ?> selected="selected"<?php endif; ?>><?php echo $warehouse->getTitle() ?></option>
-			<?php endforeach; ?>
-		</select>
-	</p>
+    <?php $stockId = $this->getCreateOrderModel()->getStockId(); ?>
+    <p class="switcher">
+        <label for="stock_switcher"><?php echo $helper->__('Warehouse:') ?></label>
+        <select id="stock_switcher" name="order[stock_id]" onchange="order.setStockId(this.value);">
+            <?php foreach ($helper->getWarehouses() as $warehouse): ?>
+                <option value="<?php echo $warehouse->getStockId() ?>"<?php if ($warehouse->getStockId() == $stockId) : ?> selected="selected"<?php endif; ?>><?php echo $warehouse->getTitle() ?></option>
+            <?php endforeach; ?>
+        </select>
+    </p>
 <?php endif; ?>
 <!-- End Warehouse -->
 
-
 <table cellspacing="0" width="100%">
-<tr>
-<?php if($this->getCustomerId()): ?>
-	<td class="side-col" style="background:none; padding:0;">
-		<div id="order-sidebar"><?php echo $this->getChildHtml('sidebar') ?></div>
-	</td>
-<?php endif; ?>
-<td <?php if($this->getCustomerId()): ?>class="main-col"<?php endif; ?>>
-	<div id="order-additional_area" style="display:none" class="order-additional-area"><?php echo $this->getChildHtml('additional_area') ?></div>
-	<div id="order-search" style="display:none" class="order-search-items"><?php echo $this->getChildHtml('search') ?></div>
-	<div id="order-items"><?php echo $this->getChildHtml('items') ?></div>
-	<div id="order-errors"><?php echo $this->getChildHtml('errors') ?></div>
-	<div id="order-form_account">
-		<div class="entry-edit">
-			<div class="entry-edit-head">
-				<h4 class="icon-head fieldset-legend head-account">Change Customer</h4>
-			</div>
+    <tr>
+        <?php if ($this->getCustomerId()): ?>
+            <td class="side-col" style="background:none; padding:0;">
+                <div id="order-sidebar"><?php echo $this->getChildHtml('sidebar') ?></div>
+            </td>
+        <?php endif; ?>
+        <td <?php if ($this->getCustomerId()): ?>class="main-col"<?php endif; ?>>
+            <div id="order-additional_area" style="display:none" class="order-additional-area"><?php echo $this->getChildHtml('additional_area') ?></div>
+            <div id="order-search" style="display:none" class="order-search-items"><?php echo $this->getChildHtml('search') ?></div>
+            <div id="order-items"><?php echo $this->getChildHtml('items') ?></div>
+            <div id="order-errors"><?php echo $this->getChildHtml('errors') ?></div>
+            <div id="order-form_account">
+                <div class="entry-edit">
+                    <div class="entry-edit-head">
+                        <h4 class="icon-head fieldset-legend head-account">Change Customer</h4>
+                    </div>
 
-			<div class="fieldset" id="main1">
-				<div class="hor-scroll">
-					Change Customer: <?php
-					$collection = Mage::getModel('customer/customer')
-						->getCollection();
+                    <div class="fieldset" id="main1">
+                        <div class="hor-scroll"><?php echo $this->__('Change Customer:') ?>
+                            <?php $_collection = Mage::getModel('customer/customer')->getCollection()->addOrder('firstname', 'ASC'); ?>
+                            <select id="select-new-customer">
+                                <option value="#" selected="selected">--Select Customer--</option>
+                                <?php foreach ($_collection as $_customer): ?>
+                                    <?php /* $_customer = Mage::getModel('customer/customer')->load($_customerId->getId()); */ ?>
+                                    <?php /* $_defaultAddress = $_customer->getDefaultBillingAddress(); ?>
+                                    <?php $_company = ($_defaultAddress && $_defaultAddress->getCompany() != '') ? ' (' . $_defaultAddress->getCompany() . ')' : ''; */ ?>
+                                    <?php $_company = ''; ?>
+                                    <option value="<?php echo $_customer->getId(); ?>"><?php echo $_customer->getFirstname() . ' ' . $_customer->getLastname() . $_company; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <script type="text/javascript">
+                                $_jppr('#select-new-customer').change(function () {
+                                    Element.show('loading-mask');
+                                    $_jppr.ajax({
+                                        cache: false,
+                                        dataType: 'json',
+                                        type: 'post',
+                                        url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getupdatecustomer/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
+                                        data: 'customer_id=' + $_jppr('#select-new-customer').val(),
+                                        success: function (data) {
+                                            Element.hide('loading-mask');
+                                            order.customerId = $_jppr('#select-new-customer').val();
+                                            order.loadArea(['header', 'shipping_method', 'billing_method', 'totals', 'items', 'giftmessage', 'shipping_address', 'billing_address', 'data'], true);
+                                        }
+                                    });
+                                });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+                <?php echo $this->getChildHtml('form_account') ?>
+            </div>
+            <div id="order-addresses">
+                <div id="order-billing_address" class="box-left"><?php echo $this->getChildHtml('billing_address') ?></div>
+                <div id="order-shipping_address" class="box-right"><?php echo $this->getChildHtml('shipping_address') ?></div>
+            </div>
+            <div class="clear"></div>
 
-					?>
-					<select id="select-new-customer">
-						<option value="#" selected="selected">--Select Customer--</option>
-						<?php foreach($collection as $customerId): ?>
-							<?php $customer = Mage::getModel('customer/customer')->load($customerId->getId()); ?>
-							<option value="<?php echo $customer->getId();?>"><?php echo $customer->getFirstname().' '.$customer->getLastname();?></option>
-						<?php endforeach; ?>
-					</select>
-					<script type="text/javascript">
-						$jppr('#select-new-customer').change(function(){
-							Element.show('loading-mask');
-							$jppr.ajax({
-								cache: false,
-								dataType: 'json',
-								type: 'post',
-								url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getupdatecustomer/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
-								data: 'customer_id='+$jppr('#select-new-customer').val(),
-								success: function (data) {
-									Element.hide('loading-mask');
-									order.customerId = $jppr('#select-new-customer').val();
-									order.loadArea(['header','shipping_method', 'billing_method', 'totals', 'items', 'giftmessage','shipping_address','billing_address','data'], true);
-									//window.location.reload();
-								}
-							});
+            <div id="order-methods">
+                <div id="order-billing_method" class="box-left payments"><?php echo $this->getChildHtml('billing_method') ?></div>
+                <div id="order-shipping_method" class="box-right">
+                    <?php echo $this->getChildHtml('shipping_method') ?>
+                </div>
+            </div>
+            <div class="clear"></div>
+            <div id="order-pickupdropoff" class="box-right">
+                <div class="entry-edit">
+                    <div class="entry-edit-head">
+                        <h4 class="icon-head fieldset-legend head-account">Update Pickup Dropoff Dates</h4>
+                    </div>
 
-							//order.setCustomerId($jppr('#select-new-customer').val());
+                    <div class="fieldset" id="main2">
+                        <button style="margin-left: 10px;" id="buttonDropoff" type="button" name="buttonDropoff"><span><span>Update Dropoff and Pickup Dates</span></span></button>
+                        <div style="" id="dialogDates">
+                            <table cellspacing="0" class="form-list-s">
+                                <tr>
 
+                                    <td class="label"><?php echo  $this->__('Dropoff Date:') . ' ' ?></td>
+                                    <td>
+                                        <?php $_startDate = ''; ?>
 
-						});
-					</script>
-				</div>
-			</div>
-		</div>
-		<?php echo $this->getChildHtml('form_account') ?>
-	</div>
-	<div id="order-addresses">
-		<div id="order-billing_address" class="box-left"><?php echo $this->getChildHtml('billing_address') ?></div>
-		<div id="order-shipping_address" class="box-right"><?php echo $this->getChildHtml('shipping_address') ?></div>
-	</div>
-	<div class="clear"></div>
-	<div id="order-pickupdropoff" class="box-right">
-		<div class="entry-edit">
-			<div class="entry-edit-head">
-				<h4 class="icon-head fieldset-legend head-account">Update Pickup Dropoff Dates</h4>
-			</div>
+                                        <?php echo $this->getLayout()->createBlock('core/html_date')
+                                            ->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
+                                            ->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
+                                            ->setName('order[estimate_send]')
+                                            ->setValue($_startDate)
+                                            ->setId('estimateSend')
+                                            ->setClass('datetime-picker input-text estimateSend')
+                                            ->toHtml();
+                                        ?>
 
-			<div class="fieldset" id="main2">
-				<button style="margin-left: 10px;" id="buttonDropoff" type="button" name="buttonDropoff"><span><span>Update Dropoff and Pickup Dates</span></span></button>
-				<div style="" id="dialogDates">
-					<table cellspacing="0" class="form-list-s">
-						<tr>
+                                    </td>
+                                    <td class="label"><?php echo $this->__('Time') . ': '; ?></td>
+                                    <td> <?php
+                                        $_hourStart = Mage::helper('payperrentals/timebox')->getTimeInput('estimateSendTime', $_storeOpen, $_storeClose, $_excludeHoursStart);
+                                        echo $_hourStart;
+                                        ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label"><?php echo  $this->__('Pickup Date:') . ' ' ?></td>
+                                    <td>
+                                        <?php $_endDate = ''; ?>
+                                        <?php echo $this->getLayout()->createBlock('core/html_date')
+                                            //->setTime('true')
+                                            ->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
+                                            ->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
+                                            ->setName('order[estimate_return]')
+                                            ->setValue($_endDate)
+                                            ->setId('estimateReturn')
+                                            ->setClass('datetime-picker input-text estimateReturn')
+                                            ->toHtml();
+                                        ?>
+                                    </td>
+                                    <td class="label"><?php echo $this->__('Time') . ': ' ?></td>
+                                    <td>
+                                        <?php $_hourReturn = Mage::helper('payperrentals/timebox')->getTimeInput('estimateReturnTime', $_storeOpen, $_storeClose, $_excludeHoursEnd); ?>
+                                        <?php echo $_hourReturn; ?>
+                                    </td>
+                                    <td class="button-column">
+                                        <button style="margin-left: 10px;" id="okBut" type="button" name="okBut"><span><span>Ok</span></span></button>
+                                    </td>
+                                    <td class="button-column">
+                                        <button style="margin-left: 10px;" id="cancelBut" type="button" name="cancelBut"><span><span>Cancel</span></span></button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <p id="estimatedDates"></p>
+                    </div>
+                </div>
+            </div>
 
-							<td class="label"><?=$this->__('Estimated Dropoff Date')?></td>
-							<td>
-								<?php
+            <?php /** todo move js including to layout */ ?>
+            <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+            <script type="text/javascript">
+                $_jppr2 = jQuery.noConflict();
+            </script>
+            <script type="text/javascript">
+                $_jppr2(document).ready(function () {
+                    $_jppr2("#buttonDropoff").click(function () {
+                        $_jppr2("#dialogDates").css('display', '');
+                    });
+                    $_jppr2("#cancelBut").click(function () {
+                        $_jppr2("#dialogDates").css('display', 'none');
+                    });
+                    $_jppr2("#okBut").click(function () {
+                        Element.show('loading-mask');
+                        $_jppr2.ajax({
+                            cache: false,
+                            dataType: 'json',
+                            type: 'post',
+                            url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/setEstimatedCreate/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
+                            data: {
+                                'startDate': $_jppr2('.estimateSend').val(),
+                                'endDate': $_jppr2('.estimateReturn').val(),
+                                'startTime': $_jppr2('.estimateSendTime').val(),
+                                'endTime': $_jppr2('.estimateReturnTime').val()
 
-								//if($_order->getEstimateSend() != ''){
-								//  $startDate = date('m/d/Y', strtotime($_order->getEstimateSend()));
-								//}else{
-								$startDate = '';
-								//}
-								echo $this->getLayout()->createBlock('core/html_date')
-									//->setTime('true')
-									->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
-									->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
-									->setName('order[estimate_send]')
-									->setValue($startDate)
-									->setId('estimateSend')
-									->setClass('datetime-picker input-text estimateSend')
-									->toHtml();
+                            },
+                            success: function (data) {
+                                Element.hide('loading-mask');
+                                Element.hide('loading-mask');
+                                $_jppr2("#estimatedDates").html(data.html);
+                                $_jppr2("#dialogDates").css('display', 'none');
+                            }});
 
-								?>
-							</td>
+                    });
 
-							<td class="label"><?=$this->__('Estimated Pickup date')?></td>
-							<td>
-								<?php
-								//if($_order->getEstimateReturn() != ''){
-								//  $endDate = date('m/d/Y', strtotime($_order->getEstimateReturn()));
-								//}else{
-								$endDate = '';
-								//}
-								echo $this->getLayout()->createBlock('core/html_date')
-									//->setTime('true')
-									->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
-									->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
-									->setName('order[estimate_return]')
-									->setValue($endDate)
-									->setId('estimateReturn')
-									->setClass('datetime-picker input-text estimateReturn')
-									->toHtml();
+                    $_jppr2("#dialogDates").css('display', 'none');
+                });
+            </script>
+            <?php if ($this->getChild('card_validation')): ?>
+                <div class="clear"></div>
+                <div id="order-methods">
+                    <div id="order-card_validation" class="box-left payments"><?php echo $this->getChildHtml('card_validation') ?></div>
+                </div>
+            <?php endif; ?>
 
-								?>
-							</td>
-							<td><button style="margin-left: 10px;" id="okBut" type="button" name="okBut"><span><span>Ok</span></span></button><button style="margin-left: 10px;" id="cancelBut" type="button" name="cancelBut"><span><span>Cancel</span></span></button></td>
-						</tr>
-					</table>
-				</div>
-				<p id="estimatedDates">
-					<?php
-					//if($_order->getEstimateSend() != ''){
-					//  echo 'Estimated Dropoff Date: '.$_order->getEstimateSend().'<br/>';
-					//}
+            <div class="clear"></div>
+            <?php echo $this->getChildHtml('gift_options') ?>
 
-					//if($_order->getEstimateReturn() != ''){
-					//  echo 'Estimated Pickup Date: '.$_order->getEstimateReturn().'<br/>';
-					//}
-					?>
-				</p>
-			</div>
-		</div>
-	</div>
-	<div id="order-methods">
-		<div id="order-billing_method" class="box-left payments"><?php echo $this->getChildHtml('billing_method') ?></div>
-		<div id="order-shipping_method" class="box-right">
-			<?php echo $this->getChildHtml('shipping_method') ?>
-		</div>
-	</div>
-
-	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
-	<script type="text/javascript">
-		$jppr2 = jQuery.noConflict();
-	</script>
-	<script type="text/javascript">
-		$jppr2(document).ready(function() {
-
-			$jppr2("#buttonDropoff").click(function(){
-				$jppr2("#dialogDates" ).css('display','');
-			});
-			$jppr2("#cancelBut").click(function(){
-				$jppr2("#dialogDates" ).css('display','none');
-			});
-			$jppr2("#okBut").click(function(){
-				Element.show('loading-mask');
-				$jppr2.ajax({
-					cache: false,
-					dataType: 'json',
-					type: 'post',
-					url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/setEstimatedCreate/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
-					data: {
-						'startDate':$jppr2('.estimateSend').val(),
-						'endDate':$jppr2('.estimateReturn').val()
-					},
-					success: function (data) {
-						Element.hide('loading-mask');
-						//$jppr2("#estimatedDates").html(data.html);
-						//var data = {};
-						//data['order[estimate_send]'] = $jppr2('.estimateSend').val();
-						//data['order[estimate_return]'] = $jppr2('.estimateReturn').val();
-						//order.loadArea(['shipping_method'], true, data);
-						$jppr2("#dialogDates" ).css('display','none');
-					}});
-
-			});
-
-			$jppr2("#dialogDates" ).css('display','none');
-		});
-	</script>
-	<?php if($this->getChild('card_validation')): ?>
-		<div class="clear"></div>
-		<div id="order-methods">
-			<div id="order-card_validation" class="box-left payments"><?php echo $this->getChildHtml('card_validation') ?></div>
-		</div>
-	<?php endif; ?>
-
-	<div class="clear"></div>
-	<?php echo $this->getChildHtml('gift_options') ?>
-
-	<div class="clear"></div>
-	<div class="box-left entry-edit">
-		<div class="entry-edit-head"><h4><?php echo Mage::helper('sales')->__('Order History') ?></h4></div>
-		<fieldset id="order-comment"><?php echo $this->getChildHtml('comment') ?></fieldset>
-	</div>
-	<div class="box-right entry-edit">
-		<div class="entry-edit-head"><h4><?php echo Mage::helper('sales')->__('Order Totals') ?></h4></div>
-		<div id="order-totals" class="order-totals"><?php echo $this->getChildHtml('totals') ?></div>
-	</div>
-	<div class="clear"></div>
-</td>
-</tr>
+            <div class="clear"></div>
+            <div class="box-left entry-edit">
+                <div class="entry-edit-head"><h4><?php echo Mage::helper('payperrentals')->__('Order History') ?></h4></div>
+                <fieldset id="order-comment"><?php echo $this->getChildHtml('comment') ?></fieldset>
+            </div>
+            <div class="box-right entry-edit">
+                <div class="entry-edit-head"><h4><?php echo Mage::helper('payperrentals')->__('Order Totals') ?></h4></div>
+                <div id="order-totals" class="order-totals"><?php echo $this->getChildHtml('totals') ?></div>
+            </div>
+            <div class="clear"></div>
+        </td>
+    </tr>
 </table>
 </div>
+
+<script type="text/javascript">
+    var pprSearchAjax = null;
+    function getSearchGridData()
+    {
+        if (pprSearchAjax) {
+            pprSearchAjax.abort();
+        }
+        var productIds = new Array();
+        var productIdsTDs = $_jppr('#sales_order_create_search_grid_table tbody tr td:first-child');
+        productIdsTDs.each(function(index, element) {
+            productIds.push($_jppr.trim(element.innerHTML));
+        });
+        pprSearchAjax = $_jppr2.ajax({
+            cache: false,
+            dataType: 'json',
+            type: 'post',
+            url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getProductsPrices/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
+            data: {
+                'products': productIds
+            },
+            success: function (data) {
+                var productIdsTDs = $_jppr('#sales_order_create_search_grid_table tbody tr td:first-child');
+                productIdsTDs.each(function(index, element) {
+                    var productId = $_jppr.trim(element.innerHTML);
+                    if (data[productId] != undefined) {
+                        $_jppr(element).parent('tr').find('.currentstock').html(data[productId]['avail']);
+                    }
+                });
+            }
+        });
+
+    }
+    sales_order_create_search_gridJsObject.initGridAjaxOrigin = sales_order_create_search_gridJsObject.initGridAjax;
+    sales_order_create_search_gridJsObject.initGridAjax = function() {
+        this.initGridAjaxOrigin();
+        getSearchGridData();
+    };
+    sales_order_create_search_gridJsObject.reloadOrigin = sales_order_create_search_gridJsObject.reload;
+    sales_order_create_search_gridJsObject.reload = function() {
+        if (pprSearchAjax) {
+            pprSearchAjax.abort();
+        }
+        this.reloadOrigin();
+    };
+    order.dataLoaded = function() {
+        getSearchGridData();
+        this.dataShow();
+    };
+    Event.observe(window, 'load',  function(){
+        getSearchGridData();
+    });
+</script>

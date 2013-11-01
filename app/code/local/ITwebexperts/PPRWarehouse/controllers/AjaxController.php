@@ -12,33 +12,30 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 	/**
 	 * override for checking the qty for every stock
 	 */
+    /*updated*/
 	public function updateTimesAction()
 	{
 		if(!$this->getRequest()->getParam('product_id')) {
 			return;
 		}
 		$Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));
-
-		$storeOpen = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_OPEN_TIME));
-		$storeClose = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_CLOSE_TIME));
-		// TODO: should we save excluded times by stock id? where is this used?
+        $helper = Mage::helper('pprwarehouse');
+        $storeOpen = Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_OPEN_TIME);
+        $storeClose = Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_CLOSE_TIME);
 		$excludedStartHours = array();
 		$excludedEndHours = array();
 
 		$start_date = urldecode($this->getRequest()->getParam('start_date'));
 		$end_date = urldecode($this->getRequest()->getParam('end_date'));
 		$qty = urldecode($this->getRequest()->getParam('qty'));
-
-		/* @var $helper ITwebexperts_PPRWarehouse_Helper_Data */
-		$helper = Mage::helper('pprwarehouse');
-
+        $time_increment = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Timebox::XML_PATH_APPEARANCE_TIMEINCREMENTS));
 		if($Product->isConfigurable()){
 			$Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
 		}
+        if (is_object($Product)) {
 		if($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE){
 			if(is_object($Product)){
 				$Product = Mage::getModel('catalog/product')->load($Product->getId());
-
 
 				/*this part disables the button and shows a message because there are booked dates in between the selected dates*/
 				$isDisabled = false;
@@ -84,19 +81,6 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 							$maxQty = 100000;
 						}
 						$bookedStartTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), $start_date, 0, true, $stockId);
-//						$bookedEndTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), $end_date, 0, true, $stockId);
-//
-//						foreach($bookedStartTimesArray as $dateFormatted => $qtyPerDay){
-//							if($maxQty < $qtyPerDay + $qty){
-//								$excludedStartHours[] = $dateFormatted;
-//							}
-//						}
-//
-//						foreach($bookedEndTimesArray as $dateFormatted => $qtyPerDay){
-//							if($maxQty < $qtyPerDay + $qty){
-//								$excludedEndHours[] = $dateFormatted;
-//							}
-//						}
 
 						if($maxQty < $qty){
 							$isDisabled = true;
@@ -106,44 +90,35 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 						if(!$isDisabled && $startTimePadding == $endTimePadding){
 							$timeStartPadding = strtotime($start_date);
 							$timeEndPadding = strtotime($end_date);
+                            $p = 0;
+                            $k = 0;
 							while ($timeStartPadding <= $timeEndPadding) {
-								foreach($bookedStartTimesArray as $dateFormatted => $qtyPerDay){
+								foreach($bookedStartTimesArray as $dateFormatted => $_paramAr){
 									//echo date('H:i:s', $timeStartPadding).'---';
-									if($dateFormatted == date('H:i:s', $timeStartPadding) && $maxQty < $qtyPerDay + $qty){
-										$isDisabled = true;
-										$disableType = 'between';
-										break;
-									}
-								}
+                                if ($dateFormatted == date('H:i:s', $timeStartPadding) && $maxQty < $_paramAr['qty'] + $qty) {
+                                    if (strtotime($start_date) + 60 * $time_increment == strtotime($end_date) && (strtotime($start_date) == $timeStartPadding && $p == 0 || strtotime($end_date) == $timeStartPadding && $p == 1)) {
+                                        $k++;
+                                    } else {
+                                        if (strtotime($start_date) != $timeStartPadding && strtotime($end_date) != $timeStartPadding) {
+                                            $isDisabled = true;
+                                            $disableType = 'between';
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
 								if($isDisabled){
 									break;
 								}
 
-								$timeStartPadding += 60 * 60;//*time_increment
+                            $timeStartPadding += 60 * $time_increment;
+                            $p++;
 							}
+                        if ($k == 2) {
+                            $isDisabled = true;
+                            $disableType = 'between';
 						}
-						//echo 'ooo'.$disableType;
-						/*This part needs redone. Is for the case when 10 feb 07:00 - 08:00 is booked and I want to book a second one from 10 feb 09:00 until 11 feb 10:00*/
-
-						/*if($startTimePadding < $endTimePadding && !$isDisabled){
-
-							while ($startTimePadding <= $endTimePadding) {
-								$bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding));
-								//print_r($bookedTimesArray);
-								foreach($bookedTimesArray as $dateFormatted => $qtyPerDay){
-									if($maxQty < $qtyPerDay + $qty){
-										$isDisabled = true;
-										$disableType = 'between';
-										break;
-									}
-								}
-								if($isDisabled){
-									break;
-								}
-
-								$startTimePadding += 60 * 60 * 24;//*time_increment
-							}
-						} */
+                    }
 
 						// if we found a vdalid stock with available items, stop checking
 						if( ! $isDisabled){
@@ -152,8 +127,8 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 
 					}
 				}
+            }
 
-			}
 		}elseif($this->getRequest()->getParam('bundle_option')){
 			$selectionIds = $this->getRequest()->getParam('bundle_option');
 			$selectedQtys1 = $this->getRequest()->getParam('bundle_option_qty1');
@@ -192,6 +167,13 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 			{
 
 				$Product = Mage::getModel('catalog/product')->load($selection->getProductId());
+                    if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
+                        if (isset($selectedQtys[$selection->getOptionId()])) {
+                            $qty = $selectedQtys[$selection->getOptionId()];
+                        } else {
+                            $qty = $qty1;
+                        }
+
 
 				if($Product->getGlobalMinPeriod() == 0){
 					$minRentalNumber = $Product->getPayperrentalsMinNumber();
@@ -235,19 +217,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 							$maxQty = 100000;
 						}
 						$bookedStartTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), $start_date, 0, true, $stockId);
-						$bookedEndTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), $end_date, 0, true, $stockId);
 
-						foreach($bookedStartTimesArray as $dateFormatted => $qtyPerDay){
-							if($maxQty < $qtyPerDay + $qty){
-								$excludedStartHours[] = $dateFormatted;
-							}
-						}
-
-						foreach($bookedEndTimesArray as $dateFormatted => $qtyPerDay){
-							if($maxQty < $qtyPerDay + $qty){
-								$excludedEndHours[] = $dateFormatted;
-							}
-						}
 
 						if($maxQty < $qty){
 							$isDisabled = true;
@@ -257,8 +227,8 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 							$timeStartPadding = strtotime($start_date);
 							$timeEndPadding = strtotime($end_date);
 							while ($timeStartPadding <= $timeEndPadding) {
-								foreach($bookedStartTimesArray as $dateFormatted => $qtyPerDay){
-									if($dateFormatted == date('H:i:s', $timeStartPadding) && $maxQty < $qtyPerDay + $qty){
+								foreach($bookedStartTimesArray as $dateFormatted => $_paramAr){
+									if($dateFormatted == date('H:i:s', $timeStartPadding) && $maxQty < $_paramAr['qty'] + $qty){
 										$isDisabled = true;
 										$disableType = 'between';
 										break;
@@ -268,27 +238,9 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 									break;
 								}
 
-								$timeStartPadding += 60 * 60;//*time_increment
+                                $timeStartPadding += 60 * $time_increment;
 							}
 						}
-						/*This part needs redone. Is for the case when 10 feb 07:00 - 08:00 is booked and I want to book a second one from 10 feb 09:00 until 11 feb 10:00*/
-						/*if($startTimePadding < $endTimePadding && !$isDisabled){
-							while ($startTimePadding <= $endTimePadding) {
-								$bookedTimesArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding));
-								foreach($bookedTimesArray as $dateFormatted => $qtyPerDay){
-									if($maxQty < $qtyPerDay + $qty){
-										$isDisabled = true;
-										$disableType = 'between';
-										break;
-									}
-								}
-								if($isDisabled){
-									break;
-								}
-
-								$startTimePadding += 60 * 60 * 24;//*time_increment
-							}
-						}*/
 
 						// stop checking stocks, we found a valid one
 						if( ! $isDisabled){
@@ -301,13 +253,25 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 				}
 			}
 		}
+        }
 
 		$timesHtml = array(
-			'startTime' => ITwebexperts_Payperrentals_Helper_Timebox::getTimeInput('start_time', $storeOpen, $storeClose, $excludedStartHours),
-			'endTime' => ITwebexperts_Payperrentals_Helper_Timebox::getTimeInput('end_time', $storeOpen, $storeClose, $excludedEndHours),
+                'startTime' => Mage::helper('payperrentals/timebox')->getTimeInput('start_time', $storeOpen, $storeClose, $excludedStartHours),
+                'endTime' => Mage::helper('payperrentals/timebox')->getTimeInput('end_time', $storeOpen, $storeClose, $excludedEndHours),
 			'isDisabled' => isset($isDisabled)?$isDisabled:false,
 			'disableType' => $disableType
 		);
+
+        } else {
+
+            $timesHtml = array(
+                'startTime' => Mage::helper('payperrentals/timebox')->getTimeInput('start_time', $storeOpen, $storeClose, $excludedStartHours),
+                'endTime' => Mage::helper('payperrentals/timebox')->getTimeInput('end_time', $storeOpen, $storeClose, $excludedEndHours),
+                'isDisabled' => true,
+                'disableType' => ''
+            );
+        }
+
 
 		$this
 			->getResponse()
@@ -322,7 +286,6 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 
 		/* @var $Product Mage_Catalog_Model_Product */
 		$Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));
-		// should we use booked by stock?
 		$booked = array();
 		$isDisabled = false;
 
@@ -332,8 +295,49 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 			$Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
 			$Product = Mage::getModel('catalog/product')->load($Product->getId());
 		}
+        if(is_object($Product)){
+        if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_GROUPED) {
+            if (is_object($Product)) {
+                $associatedProducts = $Product->getTypeInstance(true)
+                    ->getAssociatedProducts($Product);
 
-		if($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE){
+                foreach ($associatedProducts as $Product) {
+                    //Zend_Debug::dump($selection->getData());
+                    if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
+                        foreach($helper->getValidStockIds() as $stockId)
+                        {
+                            $isDisabled = false;
+                            $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+                            if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
+                                $maxQty = 100000;
+                            }
+                            if($maxQty >= $qty){
+                                $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, false, $stockId);
+                                /*foreach($bookedArray as $dateFormatted => $qtyPerDay){
+                                    if($maxQty < $qtyPerDay + $qty){
+                                        $booked[] = $dateFormatted;
+                                    }
+                                }*/
+                                foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+                                    if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
+                                        $booked[] = $dateFormatted;
+                                    }
+                                }
+                            }
+                            else{
+                                $isDisabled = true;
+                            }
+
+                            // valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
+                            if( ! $isDisabled){
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+		elseif($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE){
 			if(is_object($Product))
 			{
 				foreach($helper->getValidStockIds() as $stockId)
@@ -344,12 +348,17 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 						$maxQty = 100000;
 					}
 					if($maxQty >= $qty){
-						$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForDates($Product->getId(), null, null, 0, true, $stockId);
-						foreach($bookedArray as $dateFormatted => $qtyPerDay){
+						$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, false, $stockId);
+						/*foreach($bookedArray as $dateFormatted => $qtyPerDay){
 							if($maxQty < $qtyPerDay + $qty){
 								$booked[] = $dateFormatted;
 							}
-						}
+						}*/
+                        foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+                            if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
+                                $booked[] = $dateFormatted;
+                            }
+                        }
 					}
 					else{
 						$isDisabled = true;
@@ -414,13 +423,13 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 							$maxQty = 100000;
 						}
 						if($maxQty >= $qty){
-							$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForDates($Product->getId(), null, null, 0, true, $stockId);
+							$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, true, $stockId);
 
-							foreach($bookedArray as $dateFormatted => $qtyPerDay){
-								if($maxQty < $qtyPerDay + $qty){
-									$booked[] = $dateFormatted;
-								}
-							}
+                            foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+                                if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
+                                    $booked[] = $dateFormatted;
+                                }
+                            }
 						}else{
 							$isDisabled = true;
 							//break;
@@ -440,12 +449,19 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 			'bookedDates' =>  implode(',', $booked),
 			'isDisabled'  =>  $isDisabled
 		);
+        }else{
+
+                $bookedHtml = array(
+                    'bookedDates' => '',
+                    'isDisabled' => true
+                );
+
+        }
 
 		$this
 			->getResponse()
 			->setBody(Zend_Json::encode($bookedHtml));
 	}
-
 
 
 	public function getPriceAction()
@@ -457,7 +473,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 		if($Product->isConfigurable()){
 			$Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
 		}
-
+        if (is_object($Product) && $this->getRequest()->getParam('start_date')) {
 		$qty = urldecode($this->getRequest()->getParam('qty'));
 		$customerGroup = ITwebexperts_Payperrentals_Helper_Data::getCustomerGroup();
 
@@ -469,11 +485,46 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 			$selDays = (int)$this->getRequest()->getParam('selDays') + 1;
 			$availDate = false;
 		}
+            $onclick = '';
+            if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_GROUPED) {
+                if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && urldecode($this->getRequest()->getParam('read_end_date'))) {
+                    $associatedProducts = $Product->getTypeInstance(true)
+                        ->getAssociatedProducts($Product);
+                    //$priceVal = 0;
+                    foreach ($associatedProducts as $Product) {
+                        //Zend_Debug::dump($selection->getData());
+                        if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
 
-		if($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE || $Product->getBundlePricingtype() == ITwebexperts_Payperrentals_Model_Product_Bundlepricingtype::PRICING_BUNDLE_FORALL){
-			if(is_object($Product)){
+                            $Product = Mage::getModel('catalog/product')->load($Product->getId());
+                            $_productAssoc = $Product;
+                            $priceAmount = ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
+                            //if($priceAmount == -1){
+
+                            //}
+                            $availDate = false;
+                            if ($selDays !== false) {
+                                while (true) {
+                                    $isAvailableArr = ITwebexperts_Payperrentals_Helper_Data::isAvailableWithQty($Product->getId(), $qty, $startingDate, $endingDate);
+                                    $isAvailable = $isAvailableArr['avail'];
+                                    //print_r($isAvailableArr);
+                                    //echo $startingDate.'-'.$endingDate;
+                                    if ($isAvailable >= 1) break;
+                                    $startingDate = date('Y-m-d', strtotime('+' . $selDays . ' days', strtotime($startingDate)));
+                                    $endingDate = date('Y-m-d', strtotime('+' . $selDays . ' days', strtotime($endingDate)));
+                                }
+                                $availDate = $startingDate;
+                            }
+                        }
+                    }
+                    $onclick = "setLocation('" . Mage::helper('checkout/cart')->getAddUrl($_productAssoc, array('_query' => array('options' => array('start_date' => date('Y-m-d H:i:s', strtotime($startingDate)), 'end_date' => date('Y-m-d H:i:s', strtotime($endingDate))), 'start_date' => date('Y-m-d H:i:s', strtotime($startingDate)), 'end_date' => date('Y-m-d H:i:s', strtotime($endingDate))))) . "');";
+
+                } else {
+                    $priceAmount = -1;
+                }
+            }elseif($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE || $Product->getBundlePricingtype() == ITwebexperts_Payperrentals_Model_Product_Bundlepricingtype::PRICING_BUNDLE_FORALL){
+                if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && urldecode($this->getRequest()->getParam('read_end_date'))) {
 				$Product = Mage::getModel('catalog/product')->load($Product->getId());
-				$priceAmount = ITwebexperts_Payperrentals_Helper_Data::calculatePrice($Product->getId(), $startingDate, $endingDate, $qty, $customerGroup);
+                    $priceAmount = ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
 
 				$availDate = false;
 				if($selDays !== false){
@@ -498,6 +549,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 				$priceAmount = -1;
 			}
 		}elseif($this->getRequest()->getParam('bundle_option')){
+                if (urldecode($this->getRequest()->getParam('read_start_date')) != '' && urldecode($this->getRequest()->getParam('read_end_date'))) {
 			$selectionIds = $this->getRequest()->getParam('bundle_option');
 			$selectedQtys1 = $this->getRequest()->getParam('bundle_option_qty1');
 			$selectedQtys2 = $this->getRequest()->getParam('bundle_option_qty');
@@ -545,7 +597,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 				}
 
 				if($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
-					$priceAmount = ITwebexperts_Payperrentals_Helper_Data::calculatePrice($Product->getId(), $startingDate, $endingDate, $qty, $customerGroup);
+                            $priceAmount = $qty * ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
 					//echo $qty.'-'.$priceAmount;
 					if($priceAmount == -1){
 						$priceVal = -1;
@@ -579,24 +631,44 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 				}
 			}
 			$priceAmount = $priceVal;
+                } else {
+                    $priceAmount = -1;
+                }
 
 		}
-		$nextDay = date('Y-m-d');
-		if(ITwebexperts_Payperrentals_Helper_Data::isNextHourSelection()){
-			$nextDay = date('Y-m-d',strtotime('+1 day', time()));
-		}
 
-		$price = array(
-			'amount' => isset($priceAmount)?$priceAmount:-1,
-			'availdate' => $availDate,
-			'isavail' => ((date('Y-m-d',strtotime($availDate)) != $nextDay && $selDays !== false)?false:true),
-			'formatAmount' => isset($priceAmount)?Mage::helper('core')->currency($priceAmount):-1
-		);
-
-		$this
-			->getResponse()
-			->setBody(Zend_Json::encode($price));
-	}
-
-
+            if (ITwebexperts_Payperrentals_Helper_Data::useCalendarForFixedSelection()) {
+                $startingDateNow = $startingDate;
+            } else {
+                $startingDateNow = date('Y-m-d');
+            }
+            $nextDay = date('Y-m-d', strtotime($startingDateNow));
+            if (ITwebexperts_Payperrentals_Helper_Data::isNextHourSelection() && !ITwebexperts_Payperrentals_Helper_Data::useCalendarForFixedSelection()) {
+                $nextDay = date('Y-m-d', strtotime('+1 day', strtotime($startingDateNow)));
+            }
+            if (ITwebexperts_Payperrentals_Helper_Data::useListButtons()) {
+                Mage::getSingleton('core/session')->setData('startDateInitial', date('Y-m-d H:i:s', strtotime($startingDate)));
+                Mage::getSingleton('core/session')->setData('endDateInitial', date('Y-m-d H:i:s', strtotime($endingDate)));
+            }
+            $price = array(
+                'amount' => isset($priceAmount) ? $priceAmount : -1,
+                'onclick' => $onclick,
+                'needsConfigure' => false,
+                'availdate' => $availDate,
+                'btnList' => (ITwebexperts_Payperrentals_Helper_Data::useListButtons() ? ITwebexperts_Payperrentals_Helper_Price::getPriceListHtml(Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id')), -1, false, true) : ''),
+                'isavail' => ((date('Y-m-d', strtotime($availDate)) != $nextDay && $selDays !== false) ? false : true),
+                'formatAmount' => isset($priceAmount) ? Mage::helper('core')->currency($priceAmount) : -1
+            );
+        } else {
+            $price = array(
+                'amount' => -1,
+                'onclick' => '',
+                'needsConfigure' => true,
+                'availdate' => '',
+                'isavail' => false,
+                'formatAmount' => -1
+            );
+        }
+        $this->getResponse()->setBody(Zend_Json::encode($price));
+    }
 }

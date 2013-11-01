@@ -2,32 +2,31 @@
 /**
  *
  * @author Enrique Piatti
- */ 
+ */
+/*all functions are updated*/
 class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_Payperrentals_Helper_Data
 {
 
-	public static function getBookedQtyForTimes($product, $start_date, $isQuote = 0, $useOverbook = true, $stockId = null)
+	public static function getBookedQtyForTimes($productId, $start_date, $isQuote = 0, $useOverbook = true, $stockId = null)
 	{
+	    $Product = self::_initProduct($productId);
+        $productId = $Product->getId();
 		if( ! $stockId){
 			Mage::throwException('Stock ID is required in getBookedQtyForTimes');
 		}
 
-		if( ! $product instanceof Mage_Catalog_Model_Product){
-			$product = Mage::getModel('catalog/product')->load($product);
-		}
-		$productId = $product->getId();
 
-		if($product->getGlobalTurnoverBefore() == 0){
-			$turnoverTimeBefore = self::getPeriodInSeconds($product->getPayperrentalsAvailNumberb(), $product->getPayperrentalsAvailTypeb());
-		}else{
-			$turnoverTimeBefore = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_NUMBER),Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_TYPE));
-		}
+        if ($Product->getGlobalTurnoverBefore() == 0) {
+            $turnoverTimeBefore = self::getPeriodInSeconds($Product->getPayperrentalsAvailNumberb(), $Product->getPayperrentalsAvailTypeb());
+        } else {
+            $turnoverTimeBefore = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_TYPE));
+        }
 
-		if($product->getGlobalTurnoverAfter() == 0){
-			$turnoverTimeAfter = self::getPeriodInSeconds($product->getPayperrentalsAvailNumber(), $product->getPayperrentalsAvailType());
-		}else{
-			$turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER),Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
-		}
+        if ($Product->getGlobalTurnoverAfter() == 0) {
+            $turnoverTimeAfter = self::getPeriodInSeconds($Product->getPayperrentalsAvailNumber(), $Product->getPayperrentalsAvailType());
+        } else {
+            $turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
+        }
 
 		//here might need a check for turnover - not sure how should be handled. The problem
 		//might appear when there is a resorvation with a turnovertime of days for a hourly reservation.
@@ -36,57 +35,115 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 			->getCollection()
 			->addProductIdFilter($productId)
 			->addFieldToFilter('stock_id', $stockId);
-		if($isQuote == 0){
-			$coll->addOtypeFilter(ITwebexperts_Payperrentals_Model_Reservationorders::TYPE_ORDER);
-		}else{
-			$coll->addQuoteIdFilter($isQuote);
-		}
+		$coll->groupByOrder();
 		$coll->addBetweenDatesFilter(date('Y-m-d',strtotime($start_date)));
 
 		$booked = array();
 
-		if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($product) && $useOverbook){
-			return $booked;
-		}
+	  if (ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product) && $useOverbook) {
+            return $booked;
+        }
+        $time_increment = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Timebox::XML_PATH_APPEARANCE_TIMEINCREMENTS));
+        if (!Mage::app()->getStore()->isAdmin()) {
+            /*this part disables blocked times*/
+            $coll2 = Mage::getModel('payperrentals/excludeddates')
+                ->getCollection()
+                ->addProductIdFilter($Product->getId())
+                ->addStoreIdFilter(Mage::app()->getStore()->getId())
+                ->addSelectFilter('disabled_type = "daily" AND date(disabled_from) = date(disabled_to)');
 
-		if(!Mage::app()->getStore()->isAdmin()){
-			/*this part disables blocked times*/
-			$coll2 = Mage::getModel('payperrentals/excludeddates')
-				->getCollection()
-				->addEntityIdFilter($product->getId())
-				->addStoreIdFilter(Mage::app()->getStore()->getId())
-				->addSelectFilter('disabled_type = "daily" AND date(disabled_from) = date(disabled_to)');
+            foreach ($coll2 as $item) {
+                $startTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getDisabledFrom())));
+                $endTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getDisabledTo())));
+                while ($startTimePadding <= $endTimePadding) {
+                    $dateFormatted = date('H:i:s', $startTimePadding);
+                    $booked[$dateFormatted]['qty'] = 100000; /*todo check this - for sure it will be a bug in the quantity report*/
+                    $startTimePadding += 60 * $time_increment;
+                }
+            }
+        }
 
-			foreach ($coll2 as $item) {
-				$startTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getDisabledFrom())));
-				$endTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getDisabledTo())));
-				while ($startTimePadding <= $endTimePadding) {
-					$dateFormatted = date('H:i:s', $startTimePadding);
-					$booked[$dateFormatted] = 100000; /*todo check this - for sure it will be a bug in the quantity report*/
-					$startTimePadding += 60 * 60;//*time_increment
-				}
-			}
-		}
+        foreach ($coll as $item) {
+            $startTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getStartDate()))) - $turnoverTimeBefore;
+            $endTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getEndDate()))) + $turnoverTimeAfter;
+            $qty = $item->getQty(); //here should be qty invoiced- also check with cancelled qty
+            while ($startTimePadding <= $endTimePadding) {
+                if (date('Y-m-d', $startTimePadding) == date('Y-m-d', strtotime($start_date))) {
+                    $dateFormatted = date('H:i:s', $startTimePadding);
+                    if (isset($booked[$dateFormatted])) {
+                        $booked[$dateFormatted]['qty'] += $qty;
+                    } else {
+                        $booked[$dateFormatted]['qty'] = $qty;
+                    }
+                    if (!array_key_exists('order_start', $booked[$dateFormatted]) || strtotime($booked[$dateFormatted]['order_start']) > strtotime($item->getStartDate())) {
+                        $booked[$dateFormatted]['order_start'] = $item->getStartDate();
+                    }
 
-		foreach ($coll as $item) {
-			$startTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getStartDate()))) - $turnoverTimeBefore;
-			$endTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getEndDate()))) + $turnoverTimeAfter;
-			$qty = $item->getQty();//here should be qty invoiced- also check with cancelled qty
-			while ($startTimePadding < $endTimePadding) {
-				if(date('Y-m-d', $startTimePadding) == date('Y-m-d', strtotime($start_date))){
-					$dateFormatted = date('H:i:s', $startTimePadding);
-					if(isset($booked[$dateFormatted])){
-						$booked[$dateFormatted] += $qty;
-					}else{
-						$booked[$dateFormatted] = $qty;
-					}
-				}
+                    if (!array_key_exists('order_end', $booked[$dateFormatted]) || strtotime($booked[$dateFormatted]['order_end']) < strtotime($item->getEndDate())) {
+                        $booked[$dateFormatted]['order_end'] = $item->getEndDate();
+                    }
+                }
 
-				$startTimePadding += 60 * 60;//*time_increment
-			}
-		}
-		return $booked;
-	}
+                $startTimePadding += 60 * $time_increment;
+            }
+        }
+
+        if ($isQuote) {
+            $coll = Mage::getModel('payperrentals/reservationquotes')
+                ->getCollection()
+                ->addProductIdFilter($productId)
+                ->addQuoteIdFilter($isQuote);
+
+            //$_reserveQuote->addSelectFilter("start_date <= '" . $_enDate . "' AND end_date >= '" . $_stDate . "'");
+            $coll->groupByQuoteItem();
+            $coll->addBetweenDatesFilter(date('Y-m-d', strtotime($start_date)));
+
+            if (!Mage::app()->getStore()->isAdmin()) {
+                /*this part disables blocked times*/
+                $coll2 = Mage::getModel('payperrentals/excludeddates')
+                    ->getCollection()
+                    ->addProductIdFilter($Product->getId())
+                    ->addStoreIdFilter(Mage::app()->getStore()->getId())
+                    ->addSelectFilter('disabled_type = "daily" AND date(disabled_from) = date(disabled_to)');
+
+                foreach ($coll2 as $item) {
+                    $startTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getDisabledFrom())));
+                    $endTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getDisabledTo())));
+                    while ($startTimePadding <= $endTimePadding) {
+                        $dateFormatted = date('H:i:s', $startTimePadding);
+                        $booked[$dateFormatted]['qty'] = 100000; /*todo check this - for sure it will be a bug in the quantity report*/
+                        $startTimePadding += 60 * $time_increment;
+                    }
+                }
+            }
+
+            foreach ($coll as $item) {
+                $startTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getStartDate()))) - $turnoverTimeBefore;
+                $endTimePadding = strtotime(date('Y-m-d H:i', strtotime($item->getEndDate()))) + $turnoverTimeAfter;
+                $qty = $item->getQty(); //here should be qty invoiced- also check with cancelled qty
+                while ($startTimePadding <= $endTimePadding) {
+                    if (date('Y-m-d', $startTimePadding) == date('Y-m-d', strtotime($start_date))) {
+                        $dateFormatted = date('H:i:s', $startTimePadding);
+                        if (isset($booked[$dateFormatted])) {
+                            $booked[$dateFormatted]['qty'] += $qty;
+                        } else {
+                            $booked[$dateFormatted]['qty'] = $qty;
+                        }
+                        if (!array_key_exists('order_start', $booked[$dateFormatted]) || strtotime($booked[$dateFormatted]['order_start']) > strtotime($item->getStartDate())) {
+                            $booked[$dateFormatted]['order_start'] = $item->getStartDate();
+                        }
+
+                        if (!array_key_exists('order_end', $booked[$dateFormatted]) || strtotime($booked[$dateFormatted]['order_end']) < strtotime($item->getEndDate())) {
+                            $booked[$dateFormatted]['order_end'] = $item->getEndDate();
+                        }
+                    }
+
+                    $startTimePadding += 60 * $time_increment;
+                }
+            }
+        }
+        return $booked;
+    }
 
 
 	/**
@@ -98,154 +155,336 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 	 * @param bool $useOverbook
 	 * @return array
 	 */
-	public static function getBookedQtyForDates($product, $stDate = null, $enDate = null, $isQuote = 0, $useOverbook = true, $stockId = null)
+	public static function getBookedQtyForProducts($_productIds, $_stDate = null, $_enDate = null, $_isQuote = false, $_isReport = false, $stockId = null)
 	{
 		if( ! $stockId){
 			Mage::throwException('Stock ID is required in getBookedQtyForDates');
 		}
 
-		if( ! $product instanceof Mage_Catalog_Model_Product){
-			$product = Mage::getModel('catalog/product')->load($product);
-		}
-		$productId = $product->getId();
+		if (!is_array($_productIds)) {
+            $_productIds = array($_productIds);
+        }
+        $_productLoadAr = array();
+        $_productCollection = Mage::getModel('catalog/product')
+            ->getCollection()
+            ->addAttributeToSelect('*')
+            ->addFieldToFilter('entity_id', array('in' => $_productIds));
+        foreach ($_productCollection as $_product) {
+            if (!$_isReport && self::isAllowedOverbook($_product)) {
+                return array('booked' => array());
+            }
+            $_productLoadAr[$_product->getId()] = $_product;
+        }
+        unset($_product);
 
-		if($product->getGlobalTurnoverBefore() == 0){
-			$turnoverTimeBefore = self::getPeriodInSeconds($product->getPayperrentalsAvailNumberb(), $product->getPayperrentalsAvailTypeb());
-		}else{
-			$turnoverTimeBefore = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_NUMBER),Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_TYPE));
-		}
+        $_currentTimestamp = (int)Mage::getSingleton('core/date')->timestamp(time());
+        if (is_null($_stDate)) {
+            $_stDate = self::toDbDate($_currentTimestamp, true);
+        }
 
-		if($product->getGlobalTurnoverAfter() == 0){
-			$turnoverTimeAfter = self::getPeriodInSeconds($product->getPayperrentalsAvailNumber(), $product->getPayperrentalsAvailType());
-		}else{
-			$turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER),Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
-		}
+        if (is_null($_enDate)) {
+            $_enDate = self::toDbDate(strtotime('+' . self::CALCULATE_DAYS_AFTER . ' days', $_currentTimestamp), true);
+        }
 
-		if(is_null($stDate)){
-			$stDate = date('Y-m-d', strtotime('-'.self::CALCULATE_DAYS_BEFORE.' days', time()));
-		}
+        if ($_isReport) {
+            $_stDateCompare = date('Y-n-j', strtotime($_stDate));
+            $_enDateCompare = date('Y-n-j', strtotime($_enDate));
+        }
 
-		if(is_null($enDate)){
-			$enDate = date('Y-m-d', strtotime('+'.self::CALCULATE_DAYS_AFTER.' days', time()));
-		}
+        $_reserveOrderCollection = Mage::getModel('payperrentals/reservationorders')->getCollection()
+            ->addFieldToFilter('stock_id', $stockId)
+            ->addProductIdsFilter($_productIds);
 
-		if(!is_null($stDate)){
-			$stDate = date('Y-m-d', strtotime('-'.$turnoverTimeAfter.' seconds', strtotime($stDate)));
-		}
+        $_orderJoinCondition = array(
+            'main_table.order_id = sfo.entity_id',
+            'sfo.status <> \'canceled\'',
+            'sfo.status <> \'refunded\''
+        );
 
-		if(!is_null($enDate)){
-			$enDate = date('Y-m-d', strtotime('+'.$turnoverTimeBefore.' seconds', strtotime($enDate)));
-		}
+        $_reserveOrderCollection->getSelect()->joinInner(
+            array('sfo' => $_reserveOrderCollection->getTable('sales/order')),
+            implode(' AND ', $_orderJoinCondition),
+            array(
+                'status' => 'sfo.status'
+            ));
+        $_reserveOrderCollection->groupByOrder();
+        $_reserveOrderCollection->addSelectFilter("start_date <= '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($_enDate) . "' AND end_date >= '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($_stDate) . "'");
+
+        $_booked = array();
+        foreach ($_reserveOrderCollection as $_orderItem) {
+            $_orderItemProductId = $_orderItem->getProductId();
+            $_orderItemId = $_orderItem->getOrderId();
+            if ($_orderItem->getItemBookedSerialize() != '') {
+                $_bookedAr = unserialize($_orderItem->getItemBookedSerialize());
+                foreach ($_bookedAr as $_bookedItemDate => $_bookedItemData) {
+                    /*Compare 2 sting date with calendar range foe exclude not in range dates*/
+                    if ($_isReport && (strtotime($_bookedItemDate) < strtotime($_stDateCompare) || strtotime($_bookedItemDate) > strtotime($_enDateCompare))) continue;
+                    if (array_key_exists($_bookedItemDate, $_booked)) {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['qty'] = (array_key_exists($_orderItemProductId, $_booked[$_bookedItemDate])) ? $_booked[$_bookedItemDate][$_orderItemProductId]['qty'] + $_bookedItemData['qty'] : $_bookedItemData['qty'];
+                    } else {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['qty'] = $_bookedItemData['qty'];
+                    }
+
+                    /** Still not used */
+                    /*if (array_key_exists('order_start', $_booked[$_bookedItemDate][$_orderItemProductId])) {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['order_start'] = ($_booked[$_bookedItemDate][$_orderItemProductId]['order_start'] > $_bookedItemData['order_start']) ? $_bookedItemData['order_start'] : $_booked[$_bookedItemDate][$_orderItemProductId]['order_start'];
+                    } else {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['order_start'] = $_bookedItemData['order_start'];
+                    }
+
+                    if (array_key_exists('order_end', $_booked[$_bookedItemDate][$_orderItemProductId])) {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['order_end'] = ($_booked[$_bookedItemDate][$_orderItemProductId]['order_end'] < $_bookedItemData['order_end']) ? $_bookedItemData['order_end'] : $_booked[$_bookedItemDate][$_orderItemProductId]['order_end'];
+                    } else {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['order_end'] = $_bookedItemData['order_end'];
+                    }*/
+
+                    if (!$_isReport) {
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['period_start'][] = $_bookedItemData['start_end']['period_start'];
+                        $_booked[$_bookedItemDate][$_orderItemProductId]['period_end'][] = $_bookedItemData['start_end']['period_end'];
+                        /*if (!isset($_booked[$_bookedItemDate][$_orderItemProductId]['period_start']) || strtotime($_booked[$_bookedItemDate][$_orderItemProductId]['period_start']) > strtotime($_bookedItemData['start_end']['period_start'])) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['period_start'] = $_bookedItemData['start_end']['period_start'];
+                        }
+                        if (!isset($_booked[$_bookedItemDate][$_orderItemProductId]['period_end']) || strtotime($_booked[$_bookedItemDate][$_orderItemProductId]['period_end']) < strtotime($_bookedItemData['start_end']['period_end'])) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['period_end'] = $_bookedItemData['start_end']['period_end'];
+                        }*/
+                    } else {
+                        if (!isset($_booked[$_bookedItemDate][$_orderItemProductId]['orders']['order_ids']) || array_search($_orderItemId, $_booked[$_bookedItemDate][$_orderItemProductId]['orders']['order_ids']) === false) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['orders']['order_ids'][] = $_orderItemId;
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['orders']['start_end'][$_orderItemId]['period_start'] = $_bookedItemData['start_end']['period_start'];
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['orders']['start_end'][$_orderItemId]['period_end'] = $_bookedItemData['start_end']['period_end'];
+                        }
+                    }
+                }
+            } else {
+                /**
+                 * If database not have serialized data for time period
+                 * then calculate, serialize and save periods to database
+                 */
+                $_product = $_productLoadAr[$_orderItemProductId];
+                if ($_product->getGlobalTurnoverBefore() == 0) {
+                    $_turnoverTimeBefore = self::getPeriodInSeconds($_product->getPayperrentalsAvailNumberb(), $_product->getPayperrentalsAvailTypeb());
+                } else {
+                    $_turnoverTimeBefore = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_TYPE));
+                }
+                if ($_product->getGlobalTurnoverAfter() == 0) {
+                    $_turnoverTimeAfter = self::getPeriodInSeconds($_product->getPayperrentalsAvailNumber(), $_product->getPayperrentalsAvailType());
+                } else {
+                    $_turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
+                }
+                if (self::useReserveInventorySendReturn()) {
+                    $_itemOrder = Mage::getModel('sales/order')->load($_orderItem->getOrderId());
+
+                    if ($_itemOrder->getSendDatetime()) {
+                        $_itemStartDate = $_itemOrder->getSendDatetime();
+                    } else {
+                        $_itemStartDate = $_orderItem->getStartDate();
+                    }
+                    if ($_itemOrder->getReturnDatetime()) {
+                        $_itemEndDate = $_itemOrder->getReturnDatetime();
+                    } else {
+                        $_itemEndDate = $_orderItem->getEndDate();
+                    }
+                } else {
+                    $_itemStartDate = $_orderItem->getStartDate();
+                    $_itemEndDate = $_orderItem->getEndDate();
+                }
+
+                $_qty = $_orderItem->getQty();
+                $_turnoverForOrder = self::getTurnoverDatesForOrderItem($_product, strtotime($_itemStartDate), strtotime($_itemEndDate), $_qty);
+                $_orderItem->setStartTurnoverBefore($_turnoverForOrder['before'])
+                    ->setEndTurnoverAfter($_turnoverForOrder['after'])
+                    ->setItemBookedSerialize(serialize($_turnoverForOrder['full_date_ar']));
+                $_realOrderItem = Mage::getModel('sales/order_item')->setId($_orderItem->getOrderItemId())
+                    ->setStartTurnoverBefore($_turnoverForOrder['before'])
+                    ->setEndTurnoverAfter($_turnoverForOrder['after'])
+                    ->setItemBookedSerialize(serialize($_turnoverForOrder['full_date_ar']));
+                try {
+                    $_orderItem->save();
+                    $_realOrderItem->save();
+                } catch (Exception $e) {
+                    Mage::log('Saving error ' . $e->getMessage(), null, 'payperrentals.log');
+                }
 
 
-		$coll = Mage::getModel('payperrentals/reservationorders')
-			->getCollection()
-			->addProductIdFilter($productId)
-			->addFieldToFilter('stock_id', $stockId);
+                Mage::dispatchEvent('ppr_get_booked_qty_for_dates', array('turnover_timestamp_before' => &$_turnoverTimeBefore, 'turnover_timestamp_after' => &$_turnoverTimeAfter));
 
-		if($isQuote == 0){
-			$coll->addOtypeFilter(ITwebexperts_Payperrentals_Model_Reservationorders::TYPE_ORDER);
-		}else{
-			$coll->addQuoteIdFilter($isQuote);
-		}
-		$coll->addSelectFilter("start_date < '".self::toDbDate($enDate)."' AND end_date > '".self::toDbDate($stDate)."'")
-		;
-		//Zend_Debug::dump($coll->getData());
-		$booked = array();
-		$bookedTimes = array();
+                $_startTimePadding = strtotime(date('Y-m-d', strtotime($_itemStartDate))) - $_turnoverTimeBefore;
+                $_endTimePadding = strtotime(date('Y-m-d', strtotime($_itemEndDate))) + $_turnoverTimeAfter;
 
-		if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($product) && $useOverbook){
-			return $booked;
-		}
+                while ($_startTimePadding <= $_endTimePadding) {
+                    $_dateFormatted = date('Y-n-j', $_startTimePadding);
+                    $_startTimePadding += 86400;
+                    /*Compare 2 sting date with calendar range foe exclude not in range dates*/
+                    if ($_isReport && (strtotime($_dateFormatted) < strtotime($_stDateCompare) || strtotime($_dateFormatted) > strtotime($_enDateCompare))) continue;
+                    if (isset($_booked[$_dateFormatted][$_orderItemProductId])) {
+                        $_booked[$_dateFormatted][$_orderItemProductId]['qty'] += $_qty;
+                    } else {
+                        $_booked[$_dateFormatted][$_orderItemProductId]['qty'] = (int)$_qty;
+                    }
+                    if (!$_isReport) {
+                        $_booked[$_dateFormatted][$_orderItemProductId]['period_start'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'];
+                        $_booked[$_dateFormatted][$_orderItemProductId]['period_end'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'];
+                        /*if (!isset($_booked[$_dateFormatted][$_orderItemProductId]['period_start']) || strtotime($_booked[$_dateFormatted][$_orderItemProductId]['period_start']) > strtotime($_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'])) {
+                            $_booked[$_dateFormatted][$_orderItemProductId]['period_start'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'];
+                        }
+                        if (!isset($_booked[$_dateFormatted][$_orderItemProductId]['period_end']) || strtotime($_booked[$_dateFormatted][$_orderItemProductId]['period_end']) < strtotime($_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'])) {
+                            $_booked[$_dateFormatted][$_orderItemProductId]['period_end'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'];
+                        }*/
+                    } else {
+                        if (!isset($_booked[$_dateFormatted][$_orderItemProductId]['orders']['order_ids']) || array_search($_orderItemId, $_booked[$_dateFormatted][$_orderItemProductId]['orders']['order_ids']) === false) {
+                            $_booked[$_dateFormatted][$_orderItemProductId]['orders']['order_ids'][] = $_orderItemId;
+                            $_booked[$_dateFormatted][$_orderItemProductId]['orders']['start_end'][$_orderItemId]['period_start'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'];
+                            $_booked[$_dateFormatted][$_orderItemProductId]['orders']['start_end'][$_orderItemId]['period_end'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'];
+                        }
+                    }
+                }
+            }
+        }
 
-		$storeOpen = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_OPEN_TIME));
-		$storeClose = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_CLOSE_TIME));
+        if ($_isQuote) {
+            $_reserveQuote = Mage::getModel('payperrentals/reservationquotes')->getCollection()
+                ->addQuoteIdFilter($_isQuote)
+                 ->addFieldToFilter('stock_id', $stockId)
+                ->addProductIdsFilter($_productIds);
+            $_reserveQuote->groupByQuoteItem();
+            $_reserveQuote->addSelectFilter("start_date <= '" . $_enDate . "' AND end_date >= '" . $_stDate . "'");
 
-		$useTimes = self::useTimes($product->getId());
+            /*$_sql = $_reserveQuote->getSelect()->__toString();*/
 
-		foreach ($coll as $item) {
+            foreach ($_reserveQuote as $_quoteItem) {
+                $_quoteItemProductId = $_quoteItem->getProductId();
+                $_quoteItemId = $_quoteItem->getQuoteId();
+                if ($_quoteItem->getItemBookedSerialize() != '') {
+                    $_bookedAr = unserialize($_quoteItem->getItemBookedSerialize());
+                    foreach ($_bookedAr as $_bookedItemDate => $_bookedItemData) {
+                        /*Compare 2 sting date with calendar range foe exclude not in range dates*/
+                        if ($_isReport && (strtotime($_bookedItemDate) < strtotime($_stDateCompare) || strtotime($_bookedItemDate) > strtotime($_enDateCompare))) continue;
+                        if (array_key_exists($_bookedItemDate, $_booked)) {
+                            $_booked[$_bookedItemDate][$_quoteItemProductId]['qty'] = (array_key_exists($_quoteItemProductId, $_booked[$_bookedItemDate])) ? $_booked[$_bookedItemDate][$_quoteItemProductId]['qty'] + $_bookedItemData['qty'] : $_bookedItemData['qty'];
+                        } else {
+                            $_booked[$_bookedItemDate][$_quoteItemProductId]['qty'] = $_bookedItemData['qty'];
+                        }
 
-			$startTimePadding = strtotime(date('Y-m-d', strtotime($item->getStartDate()))) - $turnoverTimeBefore;
-			$endTimePadding = strtotime(date('Y-m-d', strtotime($item->getEndDate()))) + $turnoverTimeAfter;
+                        /** Still not used */
+                        /*if (array_key_exists('order_start', $_booked[$_bookedItemDate][$_orderItemProductId])) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['order_start'] = ($_booked[$_bookedItemDate][$_orderItemProductId]['order_start'] > $_bookedItemData['order_start']) ? $_bookedItemData['order_start'] : $_booked[$_bookedItemDate][$_orderItemProductId]['order_start'];
+                        } else {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['order_start'] = $_bookedItemData['order_start'];
+                        }
 
-			$qty = $item->getQty();//here should be qty invoiced- also check with cancelled qty
+                        if (array_key_exists('order_end', $_booked[$_bookedItemDate][$_orderItemProductId])) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['order_end'] = ($_booked[$_bookedItemDate][$_orderItemProductId]['order_end'] < $_bookedItemData['order_end']) ? $_bookedItemData['order_end'] : $_booked[$_bookedItemDate][$_orderItemProductId]['order_end'];
+                        } else {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['order_end'] = $_bookedItemData['order_end'];
+                        }*/
 
-			if($useTimes == 2){
-				$initialStartTime = strtotime(date('Y-m-d H:i:s', strtotime($item->getStartDate()))) - $turnoverTimeBefore;
-				$startTimePadding += 60 * 60 * 24;
-				$initialEndTime = strtotime(date('Y-m-d H:i:s', strtotime($item->getEndDate()))) + $turnoverTimeAfter;
-				$initStartEndTime = strtotime('-0 day', strtotime(date('Y-m-d',$initialEndTime)));
-				$endTimePadding -= 60 * 60 * 24;
-			}
+                        if (!$_isReport) {
+                            if (!isset($_booked[$_bookedItemDate][$_quoteItemProductId]['period_start']) || strtotime($_booked[$_bookedItemDate][$_quoteItemProductId]['period_start']) > strtotime($_bookedItemData['start_end']['period_start'])) {
+                                $_booked[$_bookedItemDate][$_quoteItemProductId]['period_start'] = $_bookedItemData['start_end']['period_start'];
+                            }
+                            if (!isset($_booked[$_bookedItemDate][$_quoteItemProductId]['period_end']) || strtotime($_booked[$_bookedItemDate][$_quoteItemProductId]['period_end']) < strtotime($_bookedItemData['start_end']['period_end'])) {
+                                $_booked[$_bookedItemDate][$_quoteItemProductId]['period_end'] = $_bookedItemData['start_end']['period_end'];
+                            }
+                        } else {
+                            if (!isset($_booked[$_bookedItemDate][$_quoteItemProductId]['quotes']['quote_ids']) || array_search($_quoteItemId, $_booked[$_bookedItemDate][$_quoteItemProductId]['quotes']['quote_ids']) === false) {
+                                $_booked[$_bookedItemDate][$_quoteItemProductId]['quotes']['quote_ids'][] = $_quoteItemId;
+                                $_booked[$_bookedItemDate][$_quoteItemProductId]['quotes']['start_end'][$_quoteItemId]['period_start'] = $_bookedItemData['start_end']['period_start'];
+                                $_booked[$_bookedItemDate][$_quoteItemProductId]['quotes']['start_end'][$_quoteItemId]['period_end'] = $_bookedItemData['start_end']['period_end'];
+                            }
+                        }
+                    }
+                } else {
+                    /**
+                     * If database not have serialized data for time period
+                     * then calculate, serialize and save periods to database
+                     */
+                    $_product = $_productLoadAr[$_quoteItemProductId];
+                    if ($_product->getGlobalTurnoverBefore() == 0) {
+                        $_turnoverTimeBefore = self::getPeriodInSeconds($_product->getPayperrentalsAvailNumberb(), $_product->getPayperrentalsAvailTypeb());
+                    } else {
+                        $_turnoverTimeBefore = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_BEFORE_TYPE));
+                    }
+                    if ($_product->getGlobalTurnoverAfter() == 0) {
+                        $_turnoverTimeAfter = self::getPeriodInSeconds($_product->getPayperrentalsAvailNumber(), $_product->getPayperrentalsAvailType());
+                    } else {
+                        $_turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
+                    }
+                    if (self::useReserveInventorySendReturn()) {
+                        $_itemQuote = Mage::getModel('sales/quote')->load($_quoteItem->getQuoteId());
 
-			while ($startTimePadding <= $endTimePadding) {
-				$dateFormatted = date('Y-n-j', $startTimePadding);
-				if(isset($booked[$dateFormatted])){
-					$booked[$dateFormatted] += $qty;
-				}else{
-					$booked[$dateFormatted] = $qty;
-				}
-				$startTimePadding += 60 * 60 * 24;
-			}
+                        if ($_itemQuote->getSendDatetime()) {
+                            $_itemStartDate = $_itemQuote->getSendDatetime();
+                        } else {
+                            $_itemStartDate = $_quoteItem->getStartDate();
+                        }
+                        if ($_itemQuote->getReturnDatetime()) {
+                            $_itemEndDate = $_itemQuote->getReturnDatetime();
+                        } else {
+                            $_itemEndDate = $_quoteItem->getEndDate();
+                        }
+                    } else {
+                        $_itemStartDate = $_quoteItem->getStartDate();
+                        $_itemEndDate = $_quoteItem->getEndDate();
+                    }
 
-			if($useTimes == 2){
-				if(date('Y-m-d', strtotime($item->getStartDate())) != date('Y-m-d', strtotime($item->getEndDate())) ){ //difference is bigger than 1 day
-					$endInitialStartTime = strtotime(date('Y-m-d',$initialStartTime).' 23:00:00');
+                    $_qty = $_quoteItem->getQty();
+                    $_turnoverForOrder = self::getTurnoverDatesForOrderItem($_product, strtotime($_itemStartDate), strtotime($_itemEndDate), $_qty);
+                    $_quoteItem->setStartTurnoverBefore($_turnoverForOrder['before'])
+                        ->setEndTurnoverAfter($_turnoverForOrder['after'])
+                        ->setItemBookedSerialize(serialize($_turnoverForOrder['full_date_ar']));
+                    $_realQuoteItem = Mage::getModel('sales/quote_item')->setId($_quoteItem->getQuoteItemId())
+                        ->setStartTurnoverBefore($_turnoverForOrder['before'])
+                        ->setEndTurnoverAfter($_turnoverForOrder['after'])
+                        ->setItemBookedSerialize(serialize($_turnoverForOrder['full_date_ar']));
+                    try {
+                        $_quoteItem->save();
+                        $_realQuoteItem->save();
+                    } catch (Exception $e) {
+                        Mage::log('Saving error ' . $e->getMessage(), null, 'payperrentals.log');
+                    }
 
-					while ($initialStartTime <= $endInitialStartTime) {
-						$dateFormatted = date('Y-n-j H:i', $initialStartTime);
-						$dateFormat = date('Y-n-j', $initialStartTime);
-						$timeFormat = date('H:i', $initialStartTime);
+                    $_startTimePadding = strtotime(date('Y-m-d', strtotime($_itemStartDate))) - $_turnoverTimeBefore;
+                    $_endTimePadding = strtotime(date('Y-m-d', strtotime($_itemEndDate))) + $_turnoverTimeAfter;
 
-						if(isset($bookedTimes[$dateFormat][$timeFormat])){
-							$bookedTimes[$dateFormat][$timeFormat] += $qty;
-						}else{
-							$bookedTimes[$dateFormat][$timeFormat] = $qty;
-						}
-						$initialStartTime += 60 * 60; //*time increment
-					}
+                    while ($_startTimePadding <= $_endTimePadding) {
+                        $_dateFormatted = date('Y-n-j', $_startTimePadding);
+                        $_startTimePadding += 86400;
+                        /*Compare 2 sting date with calendar range foe exclude not in range dates*/
+                        if ($_isReport && (strtotime($_dateFormatted) < strtotime($_stDateCompare) || strtotime($_dateFormatted) > strtotime($_enDateCompare))) continue;
+                        if (isset($_booked[$_dateFormatted][$_quoteItemProductId])) {
+                            $_booked[$_dateFormatted][$_quoteItemProductId]['qty'] += $_qty;
+                        } else {
+                            $_booked[$_dateFormatted][$_quoteItemProductId]['qty'] = (int)$_qty;
+                        }
+                        if (!$_isReport) {
+                            if (!isset($_booked[$_dateFormatted][$_quoteItemProductId]['period_start']) || strtotime($_booked[$_dateFormatted][$_quoteItemProductId]['period_start']) > strtotime($_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'])) {
+                                $_booked[$_dateFormatted][$_quoteItemProductId]['period_start'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'];
+                            }
+                            if (!isset($_booked[$_dateFormatted][$_quoteItemProductId]['period_end']) || strtotime($_booked[$_dateFormatted][$_quoteItemProductId]['period_end']) < strtotime($_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'])) {
+                                $_booked[$_dateFormatted][$_quoteItemProductId]['period_end'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'];
+                            }
+                        } else {
+                            if (!isset($_booked[$_dateFormatted][$_quoteItemProductId]['quotes']['quote_ids']) || array_search($_quoteItemId, $_booked[$_dateFormatted][$_quoteItemProductId]['quotes']['quote_ids']) === false) {
+                                $_booked[$_dateFormatted][$_quoteItemProductId]['quotes']['quote_ids'][] = $_quoteItemId;
+                                $_booked[$_dateFormatted][$_quoteItemProductId]['quotes']['start_end'][$_quoteItemId]['period_start'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'];
+                                $_booked[$_dateFormatted][$_quoteItemProductId]['quotes']['start_end'][$_quoteItemId]['period_end'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'];
+                            }
+                        }
+                    }
+                }
+            }
 
-					while ($initStartEndTime < $initialEndTime) {
-						$dateFormatted = date('Y-n-j H:i', $initStartEndTime);
-						$dateFormat = date('Y-n-j', $initStartEndTime);
-						$timeFormat = date('H:i', $initStartEndTime);
+        }
 
-						if(isset($bookedTimes[$dateFormat][$timeFormat])){
-							$bookedTimes[$dateFormat][$timeFormat] += $qty;
-						}else{
-							$bookedTimes[$dateFormat][$timeFormat] = $qty;
-						}
-						$initStartEndTime += 60 * 60;//*time increment
-					}
-				} else{
-					while ($initialStartTime <= $initialEndTime) {
-						$dateFormatted = date('Y-n-j H:i', $initialStartTime);
-						$dateFormat = date('Y-n-j', $initialStartTime);
-						$timeFormat = date('H:i', $initialStartTime);
 
-						if(isset($bookedTimes[$dateFormat][$timeFormat])){
-							$bookedTimes[$dateFormat][$timeFormat] += $qty;
-						}else{
-							$bookedTimes[$dateFormat][$timeFormat] = $qty;
-						}
-						$initialStartTime += 60 * 60; //*time increment
-					}
-				}
-			}
-		}
-
-		foreach($bookedTimes as $dateFormatted => $timesFormatted){
-			if(self::countNotExtra($timesFormatted, $storeOpen, $storeClose) >= ($storeClose - $storeOpen + 1)){
-				if(isset($booked[$dateFormatted])){
-					$booked[$dateFormatted] += min($timesFormatted);
-				}else{
-					$booked[$dateFormatted] = min($timesFormatted);
-				}
-			}
-		}
-
-		return $booked;
-	}
+        $_result = array(
+            'booked' => $_booked
+        );
+        if ($_isReport) {
+            $_result['products'] = $_productLoadAr;
+        }
+        return $_result;
+    }
 
 
 	/**
@@ -258,91 +497,197 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 	 * @param bool $returnQty	when true $stockID must not be null
 	 * @return bool
 	 */
-	public static function isAvailable($productId, $start_date, $end_date, $qty=1, $stockId = null, $returnQty = false)
+	public static function isAvailable($productId, $start_date, $end_date, $qty = 1, $stockId = null)
 	{
-		if($returnQty && ! $stockId){
+		if(! $stockId){
 			Mage::throwException('StockId is required when the qty is requested in isAvailable');
 		}
 
 		if(!$qty) {
 			$qty = 1;
 		}
+		$Product = self::_initProduct($productId);
+        $productId = $Product->getId();
 
-		$isAvailable = true;
-		$returnData = array(
-			'avail' => $isAvailable,
-			'maxqty' => $qty
-		);
 
-		$Product = Mage::getModel('catalog/product')->load($productId);
+		if (ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)) {
+            return true;
+        }
 
-		if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
-			return $returnQty ? $returnData : true;
-		}
 
 		$helper = Mage::helper('pprwarehouse');
 		$stockIds = $stockId ? array($stockId) : $helper->getValidStockIds();
+        $isAvailable = true;
 		foreach($stockIds as $stockId)
 		{
 			$isAvailable = true;
 			$maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
 
-			if($maxQty < $qty){
-				$isAvailable = false;
-				if($returnQty){
-					return array('avail'=>false,'maxqty' => $maxQty);
-				}
-				continue;
-			}
-			$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForDates($Product->getId(), $start_date, $end_date, 0, true, $stockId);
+			$minQty = self::getStockOnly($productId, $start_date, $end_date, $stockId);
 
-			foreach($bookedArray as $dateFormatted => $qtyPerDay){
-				if($maxQty - $qtyPerDay < $qty){
-					$isAvailable = false;
-					if($returnQty){
-						return array('avail'=>false,'maxqty' => ($maxQty - $qtyPerDay ));
-					}
-					break;
-				}
-			}
-			if( ! $isAvailable){
-				continue;
-			}
+            if ($maxQty < $qty || $minQty < $qty) {
+                $isAvailable = false;
+            }
+        }
 
-			//check if this function needs somehow the quoteid
-			$startTimePadding = strtotime(date('Y-m-d', strtotime($start_date)));
-			$endTimePadding = strtotime(date('Y-m-d', strtotime($end_date)));
+        return $isAvailable;
+	}
 
-			if($startTimePadding <= $endTimePadding){
-				while ($startTimePadding <= $endTimePadding && $isAvailable) {
-					if(!array_key_exists(date('Y-n-j', $startTimePadding), $bookedArray) ){
-						$bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding), 0, true, $stockId);
-						foreach($bookedTimesArray as $dateFormatted => $qtyPerDay){
-							if($maxQty - $qtyPerDay < $qty){
-								$isAvailable = false;
-								if($returnQty){
-									return array('avail'=>false,'maxqty' => ($maxQty - $qtyPerDay ));
-								}
-								break;
-							}
-						}
-					}
+    public static function isAvailableWithQuote($Product = null, $qty = 1, $_bundleOverbooking = false, $attributes = null)
+    {
 
-					$startTimePadding += 60 * 60 * 24;//*time_increment
-				}
-			}
+        $start_date = $Product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION)->getValue();
+        $end_date = $Product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION)->getValue();
+
+        if(!is_null($attributes)){
+            $Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($attributes, $Product);
+            $Product = Mage::getModel('catalog/product')->load($Product->getId());
+        }
+
+        //$maxQty = ITwebexperts_Payperrentals_Helper_Data::getQuantity($Product);
+        if($_bundleOverbooking || ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
+            return true;
+        }
+
+        $isAvailable = false;
+		$helper = Mage::helper('pprwarehouse');
+		foreach($helper->getValidStockIds() as $stockId)
+		{
+			$isAvailable = true;
+
+			$maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+            if ($maxQty < $qty) {
+                $isAvailable = false;
+                continue;
+            }
+            $quoteID = Mage::getSingleton("checkout/session")->getQuote()->getId();
+            if(!$quoteID){
+                $quoteID = 0;
+            }
+        /*$bookedArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForDates($Product, $start_date, $end_date, $quoteID);*/
+            $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), $start_date, $end_date, $quoteID, false, $stockId);
+            $oldQty = 0;
+            $coll5 = Mage::getModel('payperrentals/reservationquotes')
+                ->getCollection()
+                ->addProductIdFilter($Product->getId())
+                ->addFieldToFilter('stock_id', $stockId)
+                ->addSelectFilter("start_date = '".ITwebexperts_Payperrentals_Helper_Data::toDbDate($start_date)."' AND end_date = '".ITwebexperts_Payperrentals_Helper_Data::toDbDate($end_date)."' AND quote_id = '".$quoteID."'");
+
+            foreach($coll5 as $oldQuote){
+                $oldQty = $oldQuote->getQty();
+                break;
+            }
+
+            if (Mage::app()->getRequest()->getParam('qty')) {
+                $oldQty = 0;
+            }
+
+            foreach($bookedArray['booked'] as $dateFormatted => $_paramAr){
+                if($maxQty - $_paramAr[$Product->getId()]['qty'] <= $qty - $oldQty){
+                        $isAvailable = false;
+                        break;
+                }
+             }
+            if( ! $isAvailable){
+                    continue;
+            }
+
+        $startTimePadding = strtotime(date('Y-m-d', strtotime($start_date)));
+        $endTimePadding = strtotime(date('Y-m-d', strtotime($end_date)));
+        $p = 0;
+        $time_increment = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Timebox::XML_PATH_APPEARANCE_TIMEINCREMENTS));
+        $useTimes = ITwebexperts_Payperrentals_Helper_Data::useTimes($Product->getId());
+        if($useTimes == 2){
+            if($startTimePadding <= $endTimePadding){
+                while ($startTimePadding <= $endTimePadding) {
+                    if(!array_key_exists(date('Y-n-j', $startTimePadding), $bookedArray['booked']) ){
+                        $bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding), $quoteID, true, $stockId);
+                        if($p == 0){
+                            $startTimePaddingCur = strtotime(date('Y-m-d H:i', strtotime($start_date)));
+                        }else{
+                            $startTimePaddingCur = $startTimePadding;
+                        }
+
+                        $endTimePaddingCur = strtotime(date('Y-m-d', $startTimePadding).' 23:00:00');
+                        if($endTimePaddingCur >= strtotime($end_date)){
+                            $endTimePaddingCur = strtotime($end_date);
+                        }
+
+                        $intersectionArray = array();
+                        while ($startTimePaddingCur <= $endTimePaddingCur) {
+                            $dateFormatted = date('H:i:s', $startTimePaddingCur);
+                            $intersectionArray[] = $dateFormatted;
+                            $startTimePaddingCur += 60 * $time_increment;
+                        }
+                        $p = 0;
+                        foreach($bookedTimesArray as $dateFormatted => $_paramAr){
+                            //check here if there is an intersection
+                            if( in_array($dateFormatted, $intersectionArray) && ($maxQty - $_paramAr['qty'] <= $qty - $oldQty)){
+                                $p++;
+                                if ($p == 2) {
+                                    $isAvailable = false;
+								    break;
+                                }
+                            }
+                        }
+                    }
+
+                    $startTimePadding += 60 * 60 * 24;//*time_increment
+                    $p++;
+                }
+            }
+        }
+				// invalid stock, continue with another one
+		if( ! $isAvailable){
+			continue;
 		}
+		// valid stock found, stop checking
+		if( $isAvailable){
+			break;
+        }
+    }
 
-		return $returnQty ? $returnData : $isAvailable;
-	}
+        return $isAvailable;
+    }
 
 
+    public static function isAvailableWithQty($productId, $qty = 1, $start_date, $end_date, $stockId = null)
+    {
+        if(! $stockId){
+            Mage::throwException('StockId is required when the qty is requested in isAvailable');
+        }
+
+        if(!$qty) {
+            $qty = 1;
+        }
+        $Product = self::_initProduct($productId);
+        $productId = $Product->getId();
 
 
-	public static function isAvailableWithQty($productId, $qty=1, $start_date, $end_date, $stockId = null)
-	{
-		return ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailable($productId, $start_date, $end_date, $qty, $stockId, true);
-	}
+        if (ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)) {
+            return array('avail' => true, 'maxqty' => $qty);
+        }
+
+        $helper = Mage::helper('pprwarehouse');
+        $stockIds = $stockId ? array($stockId) : $helper->getValidStockIds();
+
+        foreach($stockIds as $stockId)
+        {
+            $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+
+            if ($maxQty < $qty) {
+                return array('avail' => false, 'maxqty' => $maxQty);
+            }
+            $qty = self::getStockOnly($productId, $start_date, $end_date, $stockId);
+            if ($qty > 0) {
+                return array('avail' => true, 'maxqty' => $qty);
+            } else {
+                return array('avail' => false, 'maxqty' => $qty);
+            }
+        }
+        return array('avail' => true, 'maxqty' => $qty);
+
+    }
 
 
 	/**
@@ -354,15 +699,16 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 	 * @param null|int $stockId this parameter is required, but because we need to use the same definition we are assigning a default value
 	 * @return int
 	 */
-	public static function getAvailability($product_id, $qty=1, $startingDate, $endingDate, $stockId = null)
+	public static function getAvailability($product_id, $qty = 1, $startingDate, $endingDate, $stockId = null)
 	{
 
 		if( ! $stockId){
 			Mage::throwException('Stock ID is required in getAvailability');
 		}
 
-		$stockArr = array();
-		$Product = Mage::getModel('catalog/product')->load($product_id);
+		 $stockArr = array();
+        $Product = self::_initProduct($product_id);
+        $product_id = $Product->getId();
 
 		if($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE)
 		{
@@ -383,27 +729,21 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 					$Product
 				);
 			$optionCol->appendSelections($selectionCol);
-			//$price = $Product->getPrice();
-
 			foreach ($optionCol as $option) {
 				if($option->required) {
 					$selections = $option->getSelections();
-					//print_r($selections);
 					foreach ($selections as $selection) {
 						$Product = Mage::getModel('catalog/product')->load($selection->getProductId());
 
 						if($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
 							if(!isset($stockArr[$selection->getProductId()])){
 								$stockArr[$selection->getProductId()] = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($Product->getId(), $startingDate, $endingDate, $qty, $stockId);
-								//$stockArr[$selection->getProductId()]['remaining'] = $stockArr[$selection->getProductId()]['remaining'] - ($qty-1);
-							}else{
-								// @TODO else what?????
-								//$stockArr[$selection->getProductId()]['remaining'] = $stockArr[$selection->getProductId()]['remaining'] - $qty;
-							}
+                            }
 
 						}else{
 							if(!isset($stockArr[$selection->getProductId()])){
-								$qtyStock = Mage::helper('pprwarehouse')->getQtyForProductAndStock($Product, $stockId);
+                                $_product1 = Mage::getModel('catalog/product')->load($selection->getProductId());
+								$qtyStock = Mage::helper('pprwarehouse')->getQtyForProductAndStock($_product1, $stockId);
 								$stockArr[$selection->getProductId()]['avail'] = $qtyStock;
 							}
 						}
@@ -414,12 +754,67 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 		$stockAvail = 10000;
 		foreach($stockArr as $id => $avArr){
 			if($stockAvail > $avArr['avail']){
-				//$maxQty = $avArr['avail'];
 				$stockAvail = $avArr['avail'];
 			}
 		}
 		return $stockAvail;
 	}
+
+
+    /**
+     * @param $productId
+     * @param $start_date
+     * @param $end_date
+     * @return int
+     */
+    public static function getStockOnly($productId, $start_date, $end_date, $stockId = null)
+    {
+        $Product = self::_initProduct($productId);
+        $productId = $Product->getId();
+
+        $helper = Mage::helper('pprwarehouse');
+        $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+
+        //$maxQty = ITwebexperts_Payperrentals_Helper_Data::getQuantity($Product);
+
+        /*$bookedArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForDates($productId, $start_date, $end_date, 0, false, true);*/
+        $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($productId, $start_date, $end_date, 0, false, $stockId);
+        $minQty = 1000000;
+        foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+            if (strtotime($dateFormatted) >= strtotime($start_date) && strtotime($dateFormatted) <= strtotime($end_date)) {
+                if ($minQty > ($maxQty - $_paramAr[$productId]['qty'])) {
+                    $minQty = $maxQty - $_paramAr[$productId]['qty'];
+                }
+            }
+        }
+        //check if this function needs somehow the quoteid
+        $startTimePadding = strtotime(date('Y-m-d', strtotime($start_date)));
+        $endTimePadding = strtotime(date('Y-m-d', strtotime($end_date)));
+
+        if ($startTimePadding <= $endTimePadding) {
+            while ($startTimePadding <= $endTimePadding) {
+                if (!array_key_exists(date('Y-n-j', $startTimePadding), $bookedArray)) {
+                    $bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding), 0, false, $stockId);
+                    foreach ($bookedTimesArray as $dateFormatted => $_paramAr) {
+                        if (strtotime(date('Y-m-d', $startTimePadding) . ' ' . $dateFormatted) > strtotime($start_date) && strtotime(date('Y-m-d', $startTimePadding) . ' ' . $dateFormatted) < strtotime($end_date)) {
+                            if ($minQty > ($maxQty - $_paramAr['qty'])) {
+                                $minQty = $maxQty - $_paramAr['qty'];
+                            }
+                        }
+                    }
+                }
+
+                $startTimePadding += 86400; //*time_increment
+            }
+        }
+
+        if ($minQty == 1000000) {
+            //$minQty = ITwebexperts_Payperrentals_Helper_Data::getQuantity($Product);
+            $minQty = $helper->getQtyForProductAndStock($Product, $stockId);
+        }
+
+        return $minQty;
+    }
 
 
 
@@ -431,60 +826,20 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 	 * @param null $stockId
 	 * @return array
 	 */
-	public static function getStock($product, $start_date, $end_date, $qty, $stockId = null)
+	public static function getStock($productId, $start_date, $end_date, $qty, $stockId = null)
 	{
-		$stockArr = array();
+        $stockArr = array();
 
-		$stockArr['avail'] = 0;
-		$stockArr['remaining'] = 0;
+        $minQty = self::getStockOnly($productId, $start_date, $end_date, $stockId);
 
+        if (!$qty) {
+            $qty = 1;
+        }
 
-		if( ! $product instanceof Mage_Catalog_Model_Product){
-			$product = Mage::getModel('catalog/product')->load($product);
-		}
-		else {
-			// TODO: fix this, we should not load the product if we have a valid model here
-			// the problem is that probably that model has not all the needed attributes, so we need to modify the collections first
-			$product = Mage::getModel('catalog/product')->load($product->getId());
-		}
-		$productId = $product->getId();
+        $stockArr['avail'] = $minQty;
+        $stockArr['remaining'] = $minQty - $qty;
 
-		$helper = Mage::helper('pprwarehouse');
-		$originalMaxQty = $helper->getQtyForProductAndStock($product, $stockId);
-
-		$maxQty = $originalMaxQty;
-
-		$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForDates($product, $start_date, $end_date, 0, false, $stockId);
-		$maxBookedQtyByDate = 0;
-		if($bookedArray){
-			$maxBookedQtyByDate = max($bookedArray);
-			$maxQty = $maxQty - $maxBookedQtyByDate;
-		}
-
-		//check if this function needs somehow the quoteid
-		$startTimePadding = strtotime(date('Y-m-d', strtotime($start_date)));
-		$endTimePadding = strtotime(date('Y-m-d', strtotime($end_date)));
-
-		if($startTimePadding <= $endTimePadding){
-			while ($startTimePadding <= $endTimePadding) {
-				if(!array_key_exists(date('Y-n-j', $startTimePadding), $bookedArray) ){
-					$bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($product, date('Y-m-d', $startTimePadding), 0, false, $stockId);
-					if($bookedTimesArray){
-						$maxBookedQtyByTime = max($bookedTimesArray);
-						if($maxBookedQtyByTime > $maxBookedQtyByDate){
-							$maxQty = $originalMaxQty - $maxBookedQtyByTime;
-						}
-					}
-				}
-
-				$startTimePadding += 60 * 60 * 24;//*time_increment
-			}
-		}
-
-		$stockArr['avail'] = $maxQty;
-		$stockArr['remaining'] = $maxQty;
-
-		return $stockArr;
+        return $stockArr;
 	}
 
 

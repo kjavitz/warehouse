@@ -27,7 +27,7 @@
 	<?php
 	$isSingle = ITwebexperts_Payperrentals_Helper_Data::isSingleOrder($this->getOrder());
 	if($isSingle['bool']){
-		echo 'Start Date:'.$isSingle['start_date'].'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End Date: '.$isSingle['end_date'];
+        echo $this->__('Start date:') . ' ' . $isSingle['start_date'] . ' ' . $this->__('End Date:') . ' ' . $isSingle['end_date'];
 	}
 	?>
 	<div class="hor-scroll">
@@ -74,3 +74,43 @@
 	</div>
 </div>
 <br />
+<script type="text/javascript">
+    function getItemsGridData()
+    {
+        var productIds = new Array();
+        var productIdsFields = $jppr('input[name="stock_product_id"]');
+        productIdsFields.each(function(index, element) {
+            productIds.push(element.value);
+        });
+        var pprSearchAjax = $jppr.ajax({
+            cache: false,
+            dataType: 'json',
+            type: 'post',
+            url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getProductsPrices/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
+            data: {
+                'products': productIds
+            },
+            success: function (data) {
+                var productIdsFields = $jppr('input[name="stock_product_id"]');
+                productIdsFields.each(function(index, element) {
+                    var productId = element.value;
+                    if (data[productId] != undefined) {
+                        $jppr(element).parent('td').parent('tr').find('.currentstock').html(data[productId]['avail']);
+                        $jppr(element).parent('td').parent('tr').find('.remainingstock').html(data[productId]['remaining']);
+                    }
+                });
+                /*var productIdsTDs = $_jppr('#sales_order_create_search_grid_table tbody tr td:first-child');
+                 productIdsTDs.each(function(index, element) {
+                 var productId = $_jppr.trim(element.innerHTML);
+                 if (data[productId] != undefined) {
+                 $_jppr(element).parent('tr').find('.currentstock').html(data[productId]['avail']);
+                 }
+                 });*/
+            }
+        });
+
+    }
+    Event.observe(window, 'load',  function(){
+        getItemsGridData();
+    });
+</script>

@@ -10,6 +10,9 @@
 	<?php if($_options = $this->getItemOptions()): ?>
 		<dl class="item-options">
 			<?php foreach ($_options as $_option) : ?>
+            <?php
+            if(!ITwebexperts_Payperrentals_Helper_Data::overrideAutoselectendDate() || $_option['label'] != 'End Date:'){
+            ?>
 				<dt><?php echo $this->htmlEscape($_option['label']) ?></dt>
 				<?php if (!$this->getPrintStatus()): ?>
 					<?php $_formatedOptionValue = $this->getFormatedOptionValue($_option) ?>
@@ -27,8 +30,14 @@
 				<?php else: ?>
 					<dd><?php echo $this->htmlEscape( (isset($_option['print_value']) ? $_option['print_value'] : $_option['value']) ) ?></dd>
 				<?php endif; ?>
+            <?php
+            }
+            ?>
 			<?php endforeach; ?>
 		</dl>
+        <!-- extend and buyout -->
+        <?php echo $this->getExtendHtml() ?>
+        <!-- /extend and buyout -->
 	<?php endif; ?>
 	<?php echo $_item->getDescription() ?>
 	<?php if($this->helper('giftmessage/message')->getIsMessagesAvailable('order_item', $_item) && $_item->getGiftMessageId()): ?>

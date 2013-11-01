@@ -72,11 +72,19 @@
 				<!-- End Warehouse -->
 				<th class="a-center">Sent Date</th>
 				<th class="a-center">Qty</th>
+                    <?php foreach ($this->getSentItems() as $sentItem): ?>
+                        <?php $_serialNumbers = $sentItem->getSn() ? explode(',', $sentItem->getSn()) : array() ?>
+                        <?php $_needSnColumn = (bool)(count($_serialNumbers)); ?>
+                        <?php if($_needSnColumn) break; ?>
+                    <?php endforeach; ?>
+                    <?php if ($_needSnColumn): ?>
 				<th class="last"><span class="nobr">Serial Numbers</span></th>
+                    <?php endif; ?>
 			</tr>
 			</thead>
 			<tbody class="odd">
 			<?php foreach($this->getSentItems() as $sentItem): ?>
+                    <?php $_serialNumbers = $sentItem->getSn() ? explode(',', $sentItem->getSn()) : array() ?>
 			<?php /** @var $_product Mage_Catalog_Model_Product */ ?>
 			<?php $_product = $this->getProductFromSentItem($sentItem) ?>
 			<?php $_warehouse = $this->getWarehouseSentItem($sentItem) ?>
@@ -87,6 +95,7 @@
 				</td>
 				<td>
 					<h5 class="title"><span><?php echo $this->escapeHtml($_product->getName()) ?></span></h5>
+
 					<div>
 						<strong>SKU:</strong><?php echo $this->escapeHtml($_product->getSku()) ?>
 					</div>
@@ -103,7 +112,10 @@
 				<td>
 					<?php echo $sentItem->getQty() ?>
 				</td>
+                        <?php if ($_needSnColumn): ?>
 				<td class="last a-center">
+                            <?php endif; ?>
+                            <?php if (count($_serialNumbers)): ?>
 					<table cellspacing="0" class="qty-table">
 						<tbody>
 						<?php foreach($_serialNumbers as $_sn): ?>
@@ -113,7 +125,10 @@
 						<?php endforeach ?>
 						</tbody>
 					</table>
+                            <?php endif; ?>
+                            <?php if ($_needSnColumn): ?>
 				</td>
+                    <?php endif; ?>
 			</tr>
 			<?php endforeach ?>
 			</tbody>

@@ -21,15 +21,33 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 		</tr>
 	</table>
 </div>
+<?php if (count(Mage::app()->getWebsites())): ?>
+    <?php echo $this->getChildHtml('store_switcher') ?>
+<?php endif; ?>
+<?php $_params = Mage::app()->getRequest()->getParams(); ?>
 <div class="entry-edit" style="margin-bottom:20px;">
 	<form id="edit_form" name="edit_form">
 		<input name="form_key" type="hidden" value="<?php echo Mage::getSingleton('core/session')->getFormKey() ?>" />
 		<table cellspacing="0" class="form-list-s">
 			<tr>
-				<td class="label"><?=$this->__('Search by name')?></td>
+                <td class="label"><?php echo  $this->__('Search by name') ?></td>
 				<td class="input-ele"><input class="input-text productName" name="productName" /></td>
 
-				<td class="label"><?=$this->__('Go to date')?></td>
+                <td class="label"><?php echo  $this->__('Search by Sku') ?></td>
+                <td class="input-ele"><input class="input-text productSku" name="productSku" value="<?php if(isset($_params['productSku'])) echo $_params['productSku'] ?>"/></td>
+
+                <?php $_categoryCollection = Mage::getResourceModel('catalog/category_collection')->addAttributeToSelect('name')->addAttributeToFilter('is_active', 1); ?>
+                <td class="label"><?php echo  $this->__('Search by Category') ?></td>
+                <td class="input-ele">
+                    <select class="select-box productCategory" name="productCategory">
+                        <option value="0"><?php echo $this->__('Please Select Category') ?></option>
+                        <?php foreach ($_categoryCollection as $_category): ?>
+                            <option value="<?php echo $_category->getId() ?>"<?php if(isset($_params['productCategory']) && $_params['productCategory'] == $_category->getId()): ?> selected<?php endif; ?>><?php echo $_category->getName() ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+
+                <td class="label"><?php echo  $this->__('Go to date') ?></td>
 				<td>
 					<?php
 					$gotoDate = '';
@@ -40,17 +58,14 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 						$gotoDateFullCalendar = $zDate->get('yyyy-MM-dd');
 					}
 					echo $this->getLayout()->createBlock('core/html_date')
-						//->setTime('true')
-						->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
-						->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
-						->setName('gotoDate')
-						->setValue($gotoDate)
-						->setId('gotoDate')
-						->setClass('datetime-picker input-text gotoDate')
-						->toHtml();
-
-					?>
-				</td>
+                        ->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
+                        ->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
+                        ->setName('gotoDate')
+                        ->setValue($gotoDate)
+                        ->setId('gotoDate')
+                        ->setClass('datetime-picker input-text gotoDate')
+                        ->toHtml(); ?>
+                </td>
 				<td class="label" style="padding: 0 10px;"><?=$this->__('Warehouses')?></td>
 				<td>
 					<select id="select-warehouses" name="warehouses" class="select multiselect" size="<?php echo min(count($_warehouses), 5) ?>" multiple="multiple">
@@ -94,70 +109,53 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 	?>
 </div>
 
-<?php
+<?php $localeDateFormat = Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_LONG); ?>
+<?php $localeDateFormat = str_replace('y', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yyyyy', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yyyy', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yyy', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yy', 'yyyy', $localeDateFormat); ?>
+<?php $monthFormat = str_replace('d', '', $localeDateFormat); ?>
+<?php $weekFormat = str_replace('', '', $localeDateFormat); ?>
+<?php $weekFormat = $weekFormat . "{ &#8212;" . $weekFormat . "}"; ?>
+<?php $dayFormat = str_replace('yy', '', $localeDateFormat); ?>
 
-$localeDateFormat = Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_LONG);
-$localeDateFormat = str_replace('y','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yyyyy','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yyyy','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yyy','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yy','yyyy',$localeDateFormat);
-$monthFormat = str_replace('d','',$localeDateFormat);
-$weekFormat = str_replace('','', $localeDateFormat);
-$weekFormat = $weekFormat."{ &#8212;".$weekFormat."}";
-$dayFormat = str_replace('yy','',$localeDateFormat);
+<?php $localeDateFormat = Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT); ?>
+<?php $localeDateFormat = str_replace('y', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yyyyy', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yyyy', 'yy', $localeDateFormat); ?>
+<?php $localeDateFormat = str_replace('yyy', 'yy', $localeDateFormat); ?>
+<?php $monthFormatC = str_replace('yy', '', $localeDateFormat); ?>
+<?php $monthFormatC = str_replace('MM', '', $monthFormatC); ?>
+<?php $monthFormatC = str_replace('///', '/', $monthFormatC); ?>
+<?php $monthFormatC = str_replace('//', '/', $monthFormatC); ?>
+<?php $monthFormatC = rtrim($monthFormatC, '/'); ?>
+<?php $weekFormatC = 'ddd ' . $monthFormatC; ?>
+<?php $weekFormatC = str_replace('//', '/', $weekFormatC); ?>
+<?php $dayFormatC = str_replace('yy', '', $localeDateFormat); ?>
 
-$localeDateFormat = Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT);
-$localeDateFormat = str_replace('y','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yyyyy','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yyyy','yy',$localeDateFormat);
-$localeDateFormat = str_replace('yyy','yy',$localeDateFormat);
-$monthFormatC = str_replace('yy','',$localeDateFormat);
-$monthFormatC = str_replace('MM','',$monthFormatC);
-$monthFormatC = str_replace('///','/', $monthFormatC);
-$monthFormatC = str_replace('//','/', $monthFormatC);
-$monthFormatC = rtrim($monthFormatC,'/');
-$weekFormatC = 'ddd '. $monthFormatC;
-$weekFormatC = str_replace('//','/', $weekFormatC);
-$dayFormatC = str_replace('yy','',$localeDateFormat);
-
-
-
-
-$collection = $this->getPager()->getCollection();
-$resources = array();
-$productsids = array();
-foreach($collection as $resProduct) {
-	$Product = Mage::getModel('catalog/product')->load($resProduct->getId());
-	foreach($_stockIds as $stockId)
-	{
-		if($_stockIdFilter && ! in_array($stockId, $_stockIdFilter)){
-			continue;
-		}
-		$nameqty = '';
-		if(!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1'){
-			$nameqty .= '<div style="width:100px;display:inline-block;">'. $Product->getName() .'</div>';
-		}
-		if(!Mage::app()->getRequest()->getParam('hasSKU') || Mage::app()->getRequest()->getParam('hasSKU') == '1'){
-			$nameqty .= '<div style="width:100px;display:inline-block;">'. $Product->getSku(). '</div>';
-		}
-		if(!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1'){
-			$nameqty .= '<div style="width:40px;display:inline-block;">'. (int)Mage::helper('pprwarehouse')->getQtyForProductAndStock($Product, $stockId).'</div>';
-		}
-		if($nameqty == ''){
-			$nameqty .= $Product->getName();
-		}
-		$nameqty .= '<div style="width:80px;display:inline-block;">'. Mage::helper('warehouse')->getWarehouseTitleByStockId($stockId) . '</div>';
-		$resources[] = array(
-			'name' => $nameqty,
-			'id' => $Product->getId().'_'.$stockId // str_replace('.html','',$Product->getUrlPath())
-		);
-	}
-	$productsids[] = $resProduct->getId();
-}
-
-$resources_JSON_array = json_encode($resources);
-?>
+<?php $collection = $this->getPager()->getCollection(); ?>
+<?php $resources = array(); ?>
+<?php $productsIds = array(); ?>
+<?php foreach ($collection as $resProduct): ?>
+    <?php $Product = Mage::getModel('catalog/product')->load($resProduct->getId()); ?>
+    <?php $nameqty = ''; ?>
+    <?php if (!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1'): ?>
+        <?php $nameqty .= '<div style="width:100px;display:inline-block;">' . $Product->getName() . '</div>'; ?>
+    <?php endif; ?>
+    <?php if (!Mage::app()->getRequest()->getParam('hasSKU') || Mage::app()->getRequest()->getParam('hasSKU') == '1'): ?>
+        <?php $nameqty .= '<div style="width:100px;display:inline-block;">' . $Product->getSku() . '</div>'; ?>
+    <?php endif; ?>
+    <?php if (!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1'): ?>
+        <?php $nameqty .= '<div style="width:30px;display:inline-block;">' .  ITwebexperts_Payperrentals_Helper_Data::getQuantity($Product) . '</div>'; ?>
+    <?php endif; ?>
+    <?php if ($nameqty == ''): ?>
+        <?php $nameqty .= $Product->getName(); ?>
+    <?php endif; ?>
+    <?php $resources[] = array('name' => $nameqty, 'id' => str_replace('.html', '', $Product->getUrlPath())); ?>
+    <?php $productsIds[] = $resProduct->getId(); ?>
+<?php endforeach; ?>
+<?php $resources_JSON_array = json_encode($resources); ?>
 
 <script type="text/javascript">
 
@@ -196,7 +194,7 @@ $resources_JSON_array = json_encode($resources);
 				url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getevents/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
 				type: 'POST',
 				data: {
-					productsids: '<?php echo implode(',',$productsids);?>'
+                    productsids: '<?php echo implode(',', $productsIds);?>'
 				},
 				error: function() {
 					alert('there was an error while fetching events!');
@@ -205,6 +203,7 @@ $resources_JSON_array = json_encode($resources);
 				textColor: 'black' // a non-ajax option
 			},
 			height: calcCalendarHeight(),
+            aspectRatio: 12,
 			loading: function (bool) {
 				if (bool)
 					$jppr('#loading-mask').show();
@@ -232,6 +231,18 @@ $resources_JSON_array = json_encode($resources);
 						data: 'start='+event.url,
 						success: function (data) {
 
+                            var eventParams = decodeURIComponent(event.url).split('||');
+                            var clickDate = new Date(eventParams[0]);
+                            var clickDay = clickDate.getDate();
+                            clickDate.setDate(32);
+                            var numInMonth = 32 - clickDate.getDate();
+                            var xLeft = 0;
+                            var positionDetail = 'top left';
+                            if(numInMonth - clickDay < numInMonth / 2){
+                                positionDetail = 'top right';
+                                xLeft = -380;
+                            }
+
 							$jppr('a.fc-event[href="'+event.url+'"]').qtip({
 								overwrite: false,
 								content: {
@@ -255,10 +266,10 @@ $resources_JSON_array = json_encode($resources);
 									ready: true // Show the tooltip as soon as it's bound, vital so it shows up the first time you hover!
 								},
 								position: {
-									at: 'top left',
+                                    at: positionDetail,
 									adjust: {
 										y: 40,
-										x: 0
+                                        x: xLeft
 									}
 								}
 							});
@@ -272,6 +283,8 @@ $resources_JSON_array = json_encode($resources);
 				return false;
 			}
 		});
+
+        $jppr('.fc-header-title').html($jppr('.fc-header-title').html() + "<div class='fc-header-title-description'><?php echo $this->__('Booked Inventory / Available Inventory') ?></div>");
 
 		function calcCalendarHeight() {
 			var h = $jppr(window).height() - 40;
@@ -291,14 +304,18 @@ $resources_JSON_array = json_encode($resources);
 					$jppr('#calendarProducts').fullCalendar('gotoDate', new Date('<?php echo $gotoDateFullCalendar;?>'));
 				}
 			} else{
-				var location = '<?= Mage::getUrl("payperrentals_admin/adminhtml_quantityreport/index",array('key'=> $this->getRequest()->getParam('key')))?>';
-				if(product){
-					location += 'productName/'+product+'/';
-				}
-				if($jppr('.gotoDate').val() != ''){
-					location = location +'gotoDate/'+encodeURIComponent($jppr('.gotoDate').val())+'/';
-				}
-				if(warehouses){
+                var uriParams = '';
+                uriParams = ($jppr('.productSku').val() != '') ? uriParams + 'productSku/' + $jppr('.productSku').val() + '/' : uriParams;
+                uriParams = ($jppr('.productName').val() != '') ? uriParams + 'productName/' + $jppr('.productName').val() + '/' : uriParams;
+                uriParams = ($jppr('.productCategory').val() != '0') ? uriParams + 'productCategory/' + $jppr('.productCategory').val() + '/' : uriParams;
+                /*console.log(uriParams);*/
+                var location = '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_quantityreport/index", array('key'=> $this->getRequest()->getParam('key'))); ?>' + uriParams;
+                if ($jppr('.gotoDate').val() != '') {
+                    location = location + '/gotoDate/' + encodeURIComponent($jppr('.gotoDate').val());
+                }
+                //window.location.href = location;
+
+                if(warehouses){
 					location += 'warehouses/'+encodeURIComponent(warehouses)+'/';
 				}
 				window.location.href = location;

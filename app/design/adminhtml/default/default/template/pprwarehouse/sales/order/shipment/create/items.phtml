@@ -140,7 +140,7 @@
 	$jppr = jQuery.noConflict();
 	$jppr(document).ready(function(){
 		var nameArr = [];
-		$jppr('input.reservation-item').each(function(){
+		/*$jppr('input.reservation-item').each(function(){
 			var $this = $jppr(this);
 			var match = $this.attr("name").match(/\[(\d+)\]/);
 			var name = '';
@@ -152,7 +152,7 @@
 				$jppr('<input type="text" class="sn" name="sn['+name+'][]" prid="'+name+'"/>').insertAfter($this.next());
 			}
 		});
-
+*/
 		$jppr('.sn').each(function(){
 			$jppr(this).autocomplete({
 				ajax:{

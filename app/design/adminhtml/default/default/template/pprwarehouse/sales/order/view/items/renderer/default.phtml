@@ -17,11 +17,11 @@ if ($options1 = $this->getItem()->getProductOptions()) {
 		}
 	}
 }
-if(isset($start_date)){
-	$stockArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($_item->getProduct()->getId(), $start_date, $end_date, $qty, $_stockId);
-	$current_stock = $stockArr['avail'];
-	$remaining_stock = $stockArr['remaining'];
-}
+/*if(isset($start_date)){
+	$stockArr = ITwebexperts_Payperrentals_Helper_Data::getStock($_item->getProduct()->getId(), $start_date, $end_date, $qty);
+	$current_stock = $stockArr['avail'] + $qty;
+	$remaining_stock = $stockArr['remaining'] + $qty;
+}*/
 
 ?>
 
@@ -156,8 +156,12 @@ if(isset($start_date)){
 </td>
 <td><?php echo $this->getColumnHtml($_item, 'qty') ?></td>
 
-<td><?php echo $current_stock; ?></td>
-<td><?php echo $remaining_stock; ?></td>
+    <td>
+        <input type="hidden" name="stock_product_id" value="<?php echo $_item->getProduct()->getId() ?>" />
+        <span class="currentstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span>
+    </td>
+    <td><span class="remainingstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span></td>
+
 
 <td class="a-right">
 	<?php if ($this->helper('tax')->displaySalesBothPrices() || $this->helper('tax')->displaySalesPriceExclTax()): ?>
