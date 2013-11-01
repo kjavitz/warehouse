@@ -12,6 +12,7 @@ $catalogEntity = Mage_Catalog_Model_Product::ENTITY;
 $installer->updateAttribute($catalogEntity, 'payperrentals_quantity', 'is_visible', false);
 $installer->updateAttribute($catalogEntity, 'payperrentals_use_serials', 'is_visible', false);
 $installer->updateAttribute($catalogEntity, 'res_serialnumbers', 'is_visible', false);
+$installer->updateAttribute($catalogEntity, 'allow_overbooking', 'is_visible', false);
 
 // add stock_id column to serial number table
 $tableSerialNumber = $installer->getTable('payperrentals/serialnumbers');
@@ -48,6 +49,19 @@ ALTER TABLE $tableReservationOrders ADD COLUMN `stock_id` SMALLINT(5) UNSIGNED N
   ON DELETE CASCADE
   ON UPDATE CASCADE
 , ADD INDEX `FK_RESERVATION_ORDER_STOCK_ID_idx` (`stock_id` ASC) ;
+";
+$installer->run($sql);
+
+$tableReservationQuotes = $installer->getTable('payperrentals/reservationquotes');
+$tableStock = $installer->getTable('cataloginventory/stock');
+$sql = "
+ALTER TABLE $tableReservationQuotes ADD COLUMN `stock_id` SMALLINT(5) UNSIGNED NOT NULL,
+  ADD CONSTRAINT `FK_RESERVATION_QUOTE_STOCK_ID`
+  FOREIGN KEY (`stock_id` )
+  REFERENCES $tableStock (`stock_id` )
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+, ADD INDEX `FK_RESERVATION_QUOTE_STOCK_ID_idx` (`stock_id` ASC) ;
 ";
 $installer->run($sql);
 
