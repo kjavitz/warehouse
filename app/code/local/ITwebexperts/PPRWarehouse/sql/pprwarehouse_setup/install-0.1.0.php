@@ -14,6 +14,7 @@ $installer->updateAttribute($catalogEntity, 'payperrentals_use_serials', 'is_vis
 $installer->updateAttribute($catalogEntity, 'res_serialnumbers', 'is_visible', false);
 $installer->updateAttribute($catalogEntity, 'allow_overbooking', 'is_visible', false);
 
+
 // add stock_id column to serial number table
 $tableSerialNumber = $installer->getTable('payperrentals/serialnumbers');
 $tableStock = $installer->getTable('cataloginventory/stock');
@@ -25,6 +26,18 @@ ALTER TABLE $tableSerialNumber ADD COLUMN `stock_id` SMALLINT(5) UNSIGNED NOT NU
   ON DELETE CASCADE
   ON UPDATE CASCADE
 , ADD INDEX `FK_SERIAL_NUMBER_STOCK_ID_idx` (`stock_id` ASC) ;
+";
+$installer->run($sql);
+
+$tableReservationQuotes = $installer->getTable('payperrentals/reservationquotes');
+$sql = "
+ALTER TABLE $tableReservationQuotes ADD COLUMN `stock_id` SMALLINT(5) UNSIGNED NOT NULL,
+  ADD CONSTRAINT `FK_RESERVATION_QUOTE_STOCK_ID`
+  FOREIGN KEY (`stock_id` )
+  REFERENCES $tableStock (`stock_id` )
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+, ADD INDEX `FK_RESERVATION_QUOTE_STOCK_ID_idx` (`stock_id` ASC) ;
 ";
 $installer->run($sql);
 
@@ -52,18 +65,7 @@ ALTER TABLE $tableReservationOrders ADD COLUMN `stock_id` SMALLINT(5) UNSIGNED N
 ";
 $installer->run($sql);
 
-$tableReservationQuotes = $installer->getTable('payperrentals/reservationquotes');
-$tableStock = $installer->getTable('cataloginventory/stock');
-$sql = "
-ALTER TABLE $tableReservationQuotes ADD COLUMN `stock_id` SMALLINT(5) UNSIGNED NOT NULL,
-  ADD CONSTRAINT `FK_RESERVATION_QUOTE_STOCK_ID`
-  FOREIGN KEY (`stock_id` )
-  REFERENCES $tableStock (`stock_id` )
-  ON DELETE CASCADE
-  ON UPDATE CASCADE
-, ADD INDEX `FK_RESERVATION_QUOTE_STOCK_ID_idx` (`stock_id` ASC) ;
-";
-$installer->run($sql);
+
 
 // I'm not sure if we need this
 //$tableRentalQueue = $installer->getTable('payperrentals/rentalqueue');

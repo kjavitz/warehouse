@@ -501,55 +501,43 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
         return $this;
     }
 
-    /*updated*/
-    public static function reserveOrder($items, $order)
+    public function reserveInventory($observer)
     {
-        $coll = Mage::getModel('payperrentals/reservationorders')
-            ->getCollection()
-            ->addSelectFilter("order_id='" . $order->getId() . "'");
-        if ($coll->getSize() == 0) {
-            foreach ($items as $item) {
-                $Product = Mage::getModel('catalog/product')->load($item->getProductId());
-                if ($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE /*&& $Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_CONFIGURABLE /* && $Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE*/) {
-                    continue;
-                }
+        $order = $observer->getEvent()->getOrder();
 
-                $data = $item->getProductOptionByCode('info_buyRequest');
+        if (ITwebexperts_Payperrentals_Helper_Data::reserveInventoryNoInvoice() && !ITwebexperts_Payperrentals_Helper_Data::reserveByStatus()) {
+            $items = $observer->getEvent()->getOrder()->getItemsCollection();
+            ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::reserveOrder($items, $order);
+        }
+    }
 
-                $_date_from = $data[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
-                $_date_to = $data[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
+    public function reserveInventoryByStatus($observer)
+    {
+        $order = $observer->getEvent()->getOrder();
+        $statusOrder = $observer->getEvent()->getOrder()->getStatus();
+        $statusArr = explode(',', Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_RESERVED_STATUSES));
+        if (ITwebexperts_Payperrentals_Helper_Data::reserveByStatus() && count($statusArr) > 0 && in_array($statusOrder, $statusArr)) {
+            $items = $observer->getEvent()->getOrder()->getItemsCollection();
+            ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::reserveOrder($items, $order);
+        }
+    }
 
-                /*TODO check needing add turnover save to other functions*/
-                $qty = $item->getQtyOrdered();
-                $_turnoverAr = ITwebexperts_Payperrentals_Helper_Data::getTurnoverDatesForOrderItem($Product, strtotime($_date_from), strtotime($_date_to), $qty);
+    public function convertToOrder($observer)
+    {
+        $order = $observer->getInvoice()->getOrder();
+        $statusOrder = $observer->getInvoice()->getOrder()->getStatus();
+        $statusArr = explode(',', Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_RESERVED_STATUSES));
 
-                //get item parent qty
-                if ($item->getParentItem() && $item->getParentItem()->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE) {
-                    //echo $item->getParentItem()->getQty();
-                    //print_r($item->getParentItem()->debug());
-                    //$qty = $qty * $item->getParentItem()->getQtyInvoiced();
-                    //die();
-                }
-                if ($item->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                    $model = Mage::getModel('payperrentals/reservationorders')
-                        ->setProductId($item->getProductId())
-                        ->setStartDate($_date_from)
-                        ->setEndDate($_date_to)
-                        ->setStartTurnoverBefore($_turnoverAr['before'])
-                        ->setEndTurnoverAfter($_turnoverAr['after'])
-                        ->setItemBookedSerialize(serialize($_turnoverAr['full_date_ar']))
-                        ->setQty($qty)
-                        ->setOrderId($order->getId())
-                        ->setOrderItemId($item->getId());
-
-                    $model->setStockId($item->getStockId());
-                    $model->setId(null)->save();
-                }
-                Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItemId($item->getQuoteItemId());
-            }
+        if (!ITwebexperts_Payperrentals_Helper_Data::reserveInventoryNoInvoice() || ITwebexperts_Payperrentals_Helper_Data::reserveByStatus() && !in_array($statusOrder, $statusArr)) {
+            $items = $observer->getInvoice()->getOrder()->getItemsCollection();
+            ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::reserveOrder($items, $order);
         }
 
+
+        return $this;
     }
+
+
 
 	public function createOrderBeforeSave($eventData){
 		$updateItems = array();
