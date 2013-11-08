@@ -113,7 +113,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
             return;
         }
 
-
         $stockId = $this->getRequest()->getParam('stock_id');
         if (!$stockId) {
             /** @var Innoexts_Warehouse_Helper_Data $helper */
@@ -674,6 +673,47 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $details['html'] = $orderList;
         $details['date'] = ITwebexperts_Payperrentals_Helper_Data::formatDbDate($start_date);
         $this->getResponse()->setBody(Zend_Json::encode($details));
+    }
+
+    /**
+     *
+     */
+    public function getProductsPricesAction()
+    {
+        if (!$this->getRequest()->getParam('products')) {
+            return;
+        }
+        if (!$this->getRequest()->getParam('stock_products')) {
+            $stockId = $this->getRequest()->getParam('stock_id');
+            if (!$stockId) {
+                $helper = Mage::helper('warehouse');
+                $stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
+            }
+        }else{
+            $stockProducts = $this->getRequest()->getParam('stock_products');
+        }
+
+        $output = array();
+        $productIds = $this->getRequest()->getParam('products');
+        $productCollection = Mage::getModel('catalog/product')
+            ->getCollection()
+            ->addFieldToFilter('entity_id', array('in' => $productIds));
+        if(Mage::getSingleton('core/session')->getData('startDateInitial')){
+            $startDate = Mage::getSingleton('core/session')->getData('startDateInitial');
+        }else{
+            $startDate = date('Y-m-d H:i:s');
+        }
+        if(Mage::getSingleton('core/session')->getData('endDateInitial')){
+            $endDate = Mage::getSingleton('core/session')->getData('endDateInitial');
+        }else{
+            $endDate = date('Y-m-d H:i:s');
+        }
+        foreach ($productCollection AS $product) {
+            $output[$product->getId()] = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product->getId(), $startDate, $endDate, 1, isset($stockProducts[$product->getId()])?$stockProducts[$product->getId()]:$stockId);
+        }
+        $this
+            ->getResponse()
+            ->setBody(Zend_Json::encode($output));
     }
 
 

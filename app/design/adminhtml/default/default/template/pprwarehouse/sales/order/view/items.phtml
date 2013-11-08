@@ -78,9 +78,11 @@
     function getItemsGridData()
     {
         var productIds = new Array();
+        var stockIds = new Array();
         var productIdsFields = $jppr('input[name="stock_product_id"]');
         productIdsFields.each(function(index, element) {
             productIds.push(element.value);
+            stockIds[element.value] = element.attr('stock_id');
         });
         var pprSearchAjax = $jppr.ajax({
             cache: false,
@@ -88,7 +90,8 @@
             type: 'post',
             url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getProductsPrices/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
             data: {
-                'products': productIds
+                'products': productIds,
+                'stock_products':stockIds
             },
             success: function (data) {
                 var productIdsFields = $jppr('input[name="stock_product_id"]');

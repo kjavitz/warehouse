@@ -11,6 +11,11 @@
                 <block>adminhtml/sales_order_view_items_renderer_default</block>
                 <template>pprwarehouse/sales/order/view/items/renderer/default.phtml</template>
             </action>
+            <action method="addItemRender">
+                <type>bundle</type>
+                <block>bundle/adminhtml_sales_order_view_items_renderer</block>
+                <template>pprwarehouse/sales/order/view/items/renderer/bundle.phtml</template>
+            </action>
         </reference>
     </adminhtml_sales_order_view>
 
