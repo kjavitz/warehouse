@@ -82,7 +82,7 @@
         var productIdsFields = $jppr('input[name="stock_product_id"]');
         productIdsFields.each(function(index, element) {
             productIds.push(element.value);
-            stockIds[element.value] = element.attr('stock_id');
+            stockIds[element.value] = $jppr(element).attr('stock_id');
         });
         var pprSearchAjax = $jppr.ajax({
             cache: false,
