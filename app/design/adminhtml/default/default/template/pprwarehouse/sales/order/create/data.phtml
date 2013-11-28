@@ -563,7 +563,7 @@ ProductConfigure.prototype._requestItemConfiguration = ProductConfigure.prototyp
             url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getProductsPrices/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
             data: {
                 'products': productIds,
-                'stock_id': order.getStockId()
+                'stock_id': order.stockId
             },
             success: function (data) {
                 var productIdsTDs = $_jppr('#sales_order_create_search_grid_table tbody tr td:first-child');
