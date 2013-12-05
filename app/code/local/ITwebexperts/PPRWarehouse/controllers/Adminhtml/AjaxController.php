@@ -418,15 +418,15 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $stockIds = Mage::helper('warehouse')->getStockIds();
         /* @var $pprWarehouseHelper ITwebexperts_PPRWarehouse_Helper_Data */
         $pprWarehouseHelper = Mage::helper('pprwarehouse');
-
-        $_bookedByIds = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForProducts($_productIds, $_startDate, $_endDate, false, true);
+        foreach ($stockIds as $stockId) {
+        $_bookedByIds = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($_productIds, $_startDate, $_endDate, false, true, $stockId);
         $_productLoadAr = $_bookedByIds['products'];
 
         foreach ($_bookedByIds['booked'] as $_dateFormatted => $_productAr) {
             foreach ($_productAr as $_productId => $_paramAr) {
-                $_product = $_productLoadAr[$_productId];
-                foreach ($stockIds as $stockId) {
+                    $_product = $_productLoadAr[$_productId];
                     $_maxQty = $pprWarehouseHelper->getQtyForProductAndStock($_product, $stockId);
+                   // echo 'ooo'.$_maxQty;
                // $_maxQty = $_product->getPayperrentalsQuantity();
                 /** Functional for showing all orders as different events*/
                 /*foreach($_paramAr['orders']['order_ids'] as $_incrementId){
@@ -451,15 +451,16 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
                     'url' => urlencode($_dateFormatted . '||' . implode(';', $_paramAr['orders']['order_ids']) . '||' . $_productId . '||' . $stockId),
                     'start' => date('Y-m-d', strtotime($_dateFormatted)) . ' 00:00:00',
                     'end' => date('Y-m-d', strtotime($_dateFormatted)) . ' 23:59:59',
-                    'resource' => str_replace('.html', '', $_product->getUrlPath()).'_'.$stockId
+                    'resource' => $_product->getId().'_'.$stockId
                 );
                 if ($_maxQty - $_paramAr['qty'] < 0) {
                     $_evb['backgroundColor'] = '#cc0000';
                     $_evb['className'] = 'overbookColor';
                 }
                 $_events[] = $_evb;
+
             }
-            }
+        }
         }
 
         $this->getResponse()->setBody(Zend_Json::encode($_events));

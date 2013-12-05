@@ -2,6 +2,7 @@
 <?php
 $_stockIds = Mage::helper('warehouse')->getStockIds();
 $_stockIdFilter = $this->getSotckIdFilter(); // Mage::registry('stock_id_filter');
+
 $_warehouses = Mage::helper('warehouse')->getWarehouses();
 ?>
 <link rel="stylesheet" type="text/css" href="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/fullcalendar/fullcalendar.css'; ?>" media="all" />
@@ -139,6 +140,13 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 <?php $productsIds = array(); ?>
 <?php foreach ($collection as $resProduct): ?>
     <?php $Product = Mage::getModel('catalog/product')->load($resProduct->getId()); ?>
+
+    <?php foreach($_stockIds as $stockId)
+    {
+        if($_stockIdFilter && ! in_array($stockId, $_stockIdFilter)){
+            continue;
+        }
+    ?>
     <?php $nameqty = ''; ?>
     <?php if (!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1'): ?>
         <?php $nameqty .= '<div style="width:100px;display:inline-block;">' . $Product->getName() . '</div>'; ?>
@@ -152,9 +160,18 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
     <?php if ($nameqty == ''): ?>
         <?php $nameqty .= $Product->getName(); ?>
     <?php endif; ?>
-    <?php $resources[] = array('name' => $nameqty, 'id' => str_replace('.html', '', $Product->getUrlPath())); ?>
+<?php
+$nameqty .= '<div style="width:80px;display:inline-block;">'. Mage::helper('warehouse')->getWarehouseTitleByStockId($stockId) . '</div>';
+$resources[] = array(
+'name' => $nameqty,
+'id' => $Product->getId().'_'.$stockId // str_replace('.html','',$Product->getUrlPath())
+);
+    ?>
+<?php }?>
     <?php $productsIds[] = $resProduct->getId(); ?>
+
 <?php endforeach; ?>
+
 <?php $resources_JSON_array = json_encode($resources); ?>
 
 <script type="text/javascript">
