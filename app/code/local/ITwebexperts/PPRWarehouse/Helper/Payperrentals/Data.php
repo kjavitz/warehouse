@@ -781,9 +781,11 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
         $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($productId, $start_date, $end_date, 0, false, $stockId);
         $minQty = 1000000;
         foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+            print_r($_paramAr);
+            echo 'oooo';
             if (strtotime($dateFormatted) >= strtotime($start_date) && strtotime($dateFormatted) <= strtotime($end_date)) {
-                if ($minQty > ($maxQty - $_paramAr[$productId]['qty'])) {
-                    $minQty = $maxQty - $_paramAr[$productId]['qty'];
+                if ($minQty > ($maxQty - $_paramAr['qty'])) {
+                    $minQty = $maxQty - $_paramAr['qty'];
                 }
             }
         }

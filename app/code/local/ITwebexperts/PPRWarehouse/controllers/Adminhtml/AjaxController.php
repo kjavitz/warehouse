@@ -709,8 +709,23 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         }else{
             $endDate = date('Y-m-d H:i:s');
         }
+        $qtys = array();
+        if ($this->getRequest()->getParam('qtys')) {
+            $qtys = $this->getRequest()->getParam('qtys');
+        }
+        $dates = array();
+        if ($this->getRequest()->getParam('dates')) {
+            $dates = $this->getRequest()->getParam('dates');
+        }
         foreach ($productCollection AS $product) {
-            $output[$product->getId()] = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product->getId(), $startDate, $endDate, 1, isset($stockProducts[$product->getId()])?$stockProducts[$product->getId()]:$stockId);
+            if(isset($dates[$product->getId()])){
+                $arrDates = explode(',', $dates[$product->getId()]);
+                $startDate = $arrDates[0];
+                $endDate = $arrDates[1];
+            }
+            $output[$product->getId()] = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product->getId(), $startDate, $endDate, (isset($qtys[$product->getId()])?$qtys[$product->getId()]:1), isset($stockProducts[$product->getId()])?$stockProducts[$product->getId()]:$stockId);
+            $output[$product->getId()]['avail'] += (isset($qtys[$product->getId()])?$qtys[$product->getId()]:1);
+            $output[$product->getId()]['remaining'] += (isset($qtys[$product->getId()])?$qtys[$product->getId()]:1);
         }
         $this
             ->getResponse()

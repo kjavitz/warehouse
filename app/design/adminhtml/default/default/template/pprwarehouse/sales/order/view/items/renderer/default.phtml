@@ -8,15 +8,15 @@
 //$current_stock = $qtyStock;
 //$qty = $_item->getQtyOrdered();
 //$remaining_stock = $current_stock - $qty;
-//if ($options1 = $this->getItem()->getProductOptions()) {
+if ($options1 = $this->getItem()->getProductOptions()) {
 	//$startDateLabel = $this->getItem()->getIsVirtual() ? $this->__("Subscription start:") : $this->__("First delivery:");
-//	if(isset($options1['info_buyRequest'])) {
-//		if(isset($options1['info_buyRequest'][ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION])){
-//			$start_date = $options1['info_buyRequest'][ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
-//			$end_date =  $options1['info_buyRequest'][ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
-//		}
-//	}
-//}
+	if(isset($options1['info_buyRequest'])) {
+		if(isset($options1['info_buyRequest'][ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION])){
+			$start_date = $options1['info_buyRequest'][ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
+			$end_date =  $options1['info_buyRequest'][ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
+		}
+	}
+}
 /*if(isset($start_date)){
 	$stockArr = ITwebexperts_Payperrentals_Helper_Data::getStock($_item->getProduct()->getId(), $start_date, $end_date, $qty);
 	$current_stock = $stockArr['avail'] + $qty;
@@ -157,7 +157,7 @@
 <td><?php echo $this->getColumnHtml($_item, 'qty') ?></td>
 
     <td>
-        <input type="hidden" stock_id="<?php echo $_item->getStockId() ?>" name="stock_product_id" value="<?php echo $_item->getProduct()->getId() ?>" />
+        <input type="hidden" dates="<?php echo $start_date; ?>,<?php echo $end_date;?>" qty="<?php echo $_item->getQtyOrdered();?>" stock_id="<?php echo $_item->getStockId() ?>" name="stock_product_id" value="<?php echo $_item->getProduct()->getId() ?>" />
         <span class="currentstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span>
     </td>
     <td><span class="remainingstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span></td>

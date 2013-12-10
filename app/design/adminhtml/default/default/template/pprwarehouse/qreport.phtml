@@ -155,7 +155,7 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
         <?php $nameqty .= '<div style="width:100px;display:inline-block;">' . $Product->getSku() . '</div>'; ?>
     <?php endif; ?>
     <?php if (!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1'): ?>
-        <?php $nameqty .= '<div style="width:30px;display:inline-block;">' .  ITwebexperts_Payperrentals_Helper_Data::getQuantity($Product) . '</div>'; ?>
+        <?php $nameqty .= '<div style="width:30px;display:inline-block;">' .  (int)Mage::helper('pprwarehouse')->getQtyForProductAndStock($Product, $stockId) . '</div>'; ?>
     <?php endif; ?>
     <?php if ($nameqty == ''): ?>
         <?php $nameqty .= $Product->getName(); ?>
