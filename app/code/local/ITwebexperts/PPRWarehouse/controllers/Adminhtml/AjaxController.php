@@ -426,7 +426,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
             foreach ($_productAr as $_productId => $_paramAr) {
                     $_product = $_productLoadAr[$_productId];
                     $_maxQty = $pprWarehouseHelper->getQtyForProductAndStock($_product, $stockId);
-                   // echo 'ooo'.$_maxQty;
                // $_maxQty = $_product->getPayperrentalsQuantity();
                 /** Functional for showing all orders as different events*/
                 /*foreach($_paramAr['orders']['order_ids'] as $_incrementId){
