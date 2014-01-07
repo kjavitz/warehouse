@@ -388,7 +388,7 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
     public function getSerialNumbersbyItemIdAction()
     {
         $query = $this->getRequest()->getParam('value');
-        $oId = $this->getRequest()->getParam('productId');
+        $oId = $this->getRequest()->getParam('oId');
         $oitem = Mage::getModel('sales/order_item')->load($oId);
         $productId = $oitem->getProductId();
 

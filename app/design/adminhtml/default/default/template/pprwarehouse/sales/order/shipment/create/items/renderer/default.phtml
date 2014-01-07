@@ -32,7 +32,7 @@
         <?php if ($_product->getPayperrentalsUseSerials()): ?>
             <p class="serialN"><?php echo $this->__('Serial Numbers:') ?></p>
             <?php for ($_i = 1; $_i <= ($_item->getQty() * 1); $_i++): ?>
-                <input type="text" class="sn" name="sn[<?php echo $_product->getId() ?>][]" prid="<?php echo $_product->getId() ?>"/>
+                <input type="text" class="sn" name="sn[<?php echo $_item->getOrderItemId() ?>][]" prid="<?php echo $_product->getId() ?>" oid="<?php echo $_item->getOrderItemId() ?>"/>
             <?php endfor; ?>
         <?php endif; ?>
 
