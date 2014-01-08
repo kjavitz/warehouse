@@ -1,6 +1,4 @@
-fnr.exe 
-modman.bat 
-app/code/local/ITwebexperts/PPRWarehouse/Block/Adminhtml/Grid/Column/Renderer/ReturnState.php 
+app/code/local/ITwebexperts/PPRWarehouse/Block/Adminhtml/Grid/Column/Renderer/ReturnState.php
 app/code/local/ITwebexperts/PPRWarehouse/Block/Adminhtml/Grid/Column/Renderer/ShippingState.php 
 app/code/local/ITwebexperts/PPRWarehouse/Block/Adminhtml/Grid/Column/Renderer/Warehouse.php 
 app/code/local/ITwebexperts/PPRWarehouse/Block/Adminhtml/Sales/Order/Grid.php 
