@@ -92,6 +92,24 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart extends ITwebexp
                             $startingDateFiltered = $params['start_date'];
                             $endingDateFiltered = $params['end_date'];
                         }
+                    }elseif(!$buyRequest->getIsFiltered()){
+                        $params = array('start_date' => $buyRequest->getStartDate(), 'end_date' => $buyRequest->getEndDate());
+                        $startingDateFiltered = '';
+                        $allDates = explode(',', $buyRequest->getStartDate());
+                        $nrVal = count($allDates) - 1;
+                        foreach($allDates as $key => $iDate){
+                            $paramsArr = array('idate' => $iDate);
+                            $paramsArr = ITwebexperts_Payperrentals_Helper_Data::filterDates($paramsArr, true);
+                            if($key != $nrVal){
+                                $startingDateFiltered .= $paramsArr['idate'].',';
+                            }else{
+                                $startingDateFiltered .= $paramsArr['idate'];
+                            }
+                        }
+                        $endingDateFiltered = $startingDateFiltered;
+                        $buyRequest->setStartDate($startingDateFiltered);
+                        $buyRequest->setEndDate($endingDateFiltered);
+                        $buyRequest->setIsFiltered(true);
                     }else{
                         $params = array('start_date' => $buyRequest->getStartDate(), 'end_date' => $buyRequest->getEndDate());
                         $startingDateFiltered = $params['start_date'];
@@ -105,12 +123,8 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart extends ITwebexp
                     if($_useNonsequential){
                         $product->addCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL, 1, $product);
                         $buyRequest->setNonSequential(1);
-                        $product->addCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION, $buyRequest->getStartDate(), $product);
-                        $product->addCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION, $buyRequest->getStartDate(), $product);
                     }else{
                         $product->addCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL, 0, $product);
-                        $product->addCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION, date('Y-m-d H:i:s', strtotime($buyRequest->getStartDate())), $product);
-                        $product->addCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION, date('Y-m-d H:i:s', strtotime($buyRequest->getEndDate())), $product);
                         $buyRequest->setNonSequential(0);
                     }
 
@@ -151,7 +165,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart extends ITwebexp
                             Mage::getSingleton('core/session')->setData('startDateInitial', $startingDateFiltered);
                             Mage::getSingleton('core/session')->setData('endDateInitial', $endingDateFiltered);
                         }else{
-                            Mage::getSingleton('core/session')->setData('startDateInitial', $buyRequest->getStartDate());
+                            Mage::getSingleton('core/session')->setData('startDateInitial', $params['start_date']);
                         }
                     }
 
