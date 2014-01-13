@@ -78,14 +78,20 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart extends ITwebexp
                     if (!$buyRequest->getEndDate()) {
                         $buyRequest->setEndDate($buyRequest->getStartDate());
                     }
-                    if(!$buyRequest->getIsFiltered()){
-                        $params = array('start_date' => $buyRequest->getStartDate(), 'end_date' => $buyRequest->getEndDate());
-                        $params = ITwebexperts_Payperrentals_Helper_Data::filterDates($params, true);
-                        $startingDateFiltered = $params['start_date'];
-                        $endingDateFiltered = $params['end_date'];
-                        $buyRequest->setStartDate($startingDateFiltered);
-                        $buyRequest->setEndDate($endingDateFiltered);
-                        $buyRequest->setIsFiltered(true);
+                    if(!$_useNonsequential){
+                        if(!$buyRequest->getIsFiltered()){
+                            $params = array('start_date' => $buyRequest->getStartDate(), 'end_date' => $buyRequest->getEndDate());
+                            $params = ITwebexperts_Payperrentals_Helper_Data::filterDates($params, true);
+                            $startingDateFiltered = $params['start_date'];
+                            $endingDateFiltered = $params['end_date'];
+                            $buyRequest->setStartDate($startingDateFiltered);
+                            $buyRequest->setEndDate($endingDateFiltered);
+                            $buyRequest->setIsFiltered(true);
+                        }else{
+                            $params = array('start_date' => $buyRequest->getStartDate(), 'end_date' => $buyRequest->getEndDate());
+                            $startingDateFiltered = $params['start_date'];
+                            $endingDateFiltered = $params['end_date'];
+                        }
                     }else{
                         $params = array('start_date' => $buyRequest->getStartDate(), 'end_date' => $buyRequest->getEndDate());
                         $startingDateFiltered = $params['start_date'];

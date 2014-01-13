@@ -26,9 +26,15 @@
 <div class="grid np">
 	<?php
 	$isSingle = ITwebexperts_Payperrentals_Helper_Data::isSingleOrder($this->getOrder());
-	if($isSingle['bool']){
-        echo $this->__('Start date:') . ' ' . $isSingle['start_date'] . ' ' . $this->__('End Date:') . ' ' . $isSingle['end_date'];
-	}
+    if($isSingle['bool'] && !ITwebexperts_Payperrentals_Helper_Data::useNonSequential()){
+        if($isSingle['start_date'] != $isSingle['end_date']){
+            echo $this->__('Start date:') . ' ' . $isSingle['start_date'] . ' ' . $this->__('End Date:') . ' ' . $isSingle['end_date'];
+        }else{
+            echo $this->__('Start Date:') . ' ' . $isSingle['start_date'] ;
+        }
+    }else{
+        echo $this->__('Dates:') . ' ' . $isSingle['start_date'] ;
+    }
 	?>
 	<div class="hor-scroll">
 		<table cellspacing="0" class="data order-tables">
