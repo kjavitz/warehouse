@@ -160,6 +160,10 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
     /*updated*/
     public function updateCartReservation($event)
     {
+        //find a different warehouse from where to get the stock
+        //splitqty is enabled... should recreate the items with maximum qty per warehouse.
+
+
         $quoteItem = $event->getItem();
         $stockId = $quoteItem->getStockId();
 
@@ -183,9 +187,21 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
             return;
         }
 
-        $start_date = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
-        $end_date = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
+        //check if non sequential
+        //then go for every date and check if is available
+        $nonSequential = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL];
+        $start_date_val = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
+        $end_date_val = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
 
+        if($nonSequential == 1){
+            $startDateArr = explode(',', $start_date_val);
+            $endDateArr = explode(',', $start_date_val);
+        }else{
+            $startDateArr = array($start_date_val);
+            $endDateArr = array($end_date_val);
+        }
+        foreach($startDateArr as $count => $start_date){
+            $end_date = $endDateArr[$count];
 
         if ($quoteItem->getProductType() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE) {
 
@@ -234,88 +250,23 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
                 $quoteID = 0;
             }
 
-            /*$bookedArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForDates($Product, $start_date, $end_date, $quoteID);*/
-            $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), $start_date, $end_date, $quoteID, false, $stockId);
-
-
-            $oldQty = 0;
-            $coll5 = Mage::getModel('payperrentals/reservationquotes')
-                ->getCollection()
-                ->addProductIdFilter($Product->getId())
-                ->addSelectFilter("start_date = '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($start_date) . "' AND end_date = '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($end_date) . "' AND quote_id = '" . (string)$quoteID . "'");
-            $coll5->addFieldToFilter('stock_id', $stockId);
-            foreach ($coll5 as $oldQuote) {
-                $oldQty = $oldQuote->getQty();
-                if ($qtyNotUpdate) {
-                    $qty += $oldQty;
-                }
-                break;
-            }
-
-            foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
-                if ($maxQty - $_paramAr[$Product->getId()]['qty'] < $qty - $oldQty) {
+                $avail = Mage::helper('payperrentals/rendercart')->checkAvailability($Product, $start_date, $end_date, $quoteID, $qty, $maxQty, $quoteItem->getId(), $stockId);
+                if(!$avail){
                     Mage::throwException(Mage::helper("checkout")->__("The product you requested does not have enough inventory available"));
-                    return;
                 }
-            }
 
-            $startTimePadding = strtotime(date('Y-m-d', strtotime($start_date)));
-            $endTimePadding = strtotime(date('Y-m-d', strtotime($end_date)));
-            $p = 0;
-            $time_increment = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Timebox::XML_PATH_APPEARANCE_TIMEINCREMENTS));
-            $useTimes = ITwebexperts_Payperrentals_Helper_Data::useTimes($Product->getId());
-            if ($useTimes == 2) {
-                if ($startTimePadding <= $endTimePadding) {
-                    while ($startTimePadding <= $endTimePadding) {
-                        if (!array_key_exists(date('Y-n-j', $startTimePadding), $bookedArray['booked'])) {
-                            $bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding), $quoteID, true, $stockId);
-
-                            if ($p == 0) {
-                                $startTimePaddingCur = strtotime(date('Y-m-d H:i', strtotime($start_date)));
-                            } else {
-                                $startTimePaddingCur = $startTimePadding;
-                            }
-
-                            $endTimePaddingCur = strtotime(date('Y-m-d', $startTimePadding) . ' 23:00:00');
-                            if ($endTimePaddingCur >= strtotime($end_date)) {
-                                $endTimePaddingCur = strtotime($end_date);
-                            }
-
-                            $intersectionArray = array();
-                            while ($startTimePaddingCur <= $endTimePaddingCur) {
-                                $dateFormatted = date('H:i:s', $startTimePaddingCur);
-                                $intersectionArray[] = $dateFormatted;
-                                $startTimePaddingCur += 60 * $time_increment;
-                            }
-                            $p = 0;
-                            foreach ($bookedTimesArray as $dateFormatted => $_paramAr) {
-                                //check here if there is an intersection
-                                if (in_array($dateFormatted, $intersectionArray) && ($maxQty - $_paramAr['qty'] < $qty - $oldQty)) {
-                                    $p++;
-                                    if ($p == 2) {
-                                        Mage::throwException(Mage::helper("checkout")->__("The product you requested does not have enough inventory available"));
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-
-                        $startTimePadding += 60 * 60 * 24; //*time_increment
-                        $p++;
-                    }
-                }
-            }
             /**
              * Get turnover dates for order item
              * */
-            $_turnoverAr = ITwebexperts_Payperrentals_Helper_Data::getTurnoverDatesForOrderItem($Product, strtotime($start_date), strtotime($end_date), $qty);
-            //Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($quoteItem);
+            $_resultDates = ITwebexperts_Payperrentals_Helper_Data::matchStartEndDates($start_date, $end_date);
+            $_turnoverAr = ITwebexperts_Payperrentals_Helper_Data::getTurnoverDatesForOrderItem($Product, strtotime($_resultDates['start_date']), strtotime($_resultDates['end_date']), $qty);
             $aChildQuoteItems = Mage::getModel("sales/quote_item")
                 ->getCollection()
                 ->setQuote($quoteItem->getQuote())
                 ->addFieldToFilter("parent_item_id", $quoteItem->getId());
             if ($quoteItem->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($quoteItem);
+                    Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItemAndDates($quoteItem, $start_date, $end_date);//todo check if this breaks anything
+                    //Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($quoteItem);
                 $BQuoteItem = Mage::getModel('payperrentals/reservationquotes');
                 $BQuoteItem
                     ->setProductId($quoteItem->getProductId())
@@ -336,7 +287,8 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
             }
             foreach ($aChildQuoteItems as $cItems) {
                 if ($cItems->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                    Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($cItems);
+                        Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItemAndDates($cItems, $start_date, $end_date);//todo check if this breaks anything
+                        //Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($quoteItem);
                     $BQuoteItem = Mage::getModel('payperrentals/reservationquotes');
                     $BQuoteItem
                         ->setProductId($cItems->getProductId())
@@ -379,7 +331,8 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
 
             $qty1 = $qty;
             $selections = $Product->getTypeInstance(true)->getSelectionsByIds($selectionIds, $Product);
-            Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($quoteItem);
+                Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItemAndDates($quoteItem, $start_date, $end_date);//todo check if this breaks anything
+                //Mage::getResourceModel('payperrentals/reservationquotes')->deleteByQuoteItem($quoteItem);
 
             foreach ($selections->getItems() as $selection) {
                 $Product = Mage::getModel('catalog/product')->load($selection->getProductId());
@@ -408,79 +361,16 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
                         $quoteID = 0;
                     }
 
-                    /*$bookedArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForDates($Product, $start_date, $end_date, $quoteID);*/
-                    $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), $start_date, $end_date, $quoteID, false, $stockId);
-
-                    $oldQty = 0;
-                    $coll5 = Mage::getModel('payperrentals/reservationquotes')
-                        ->getCollection()
-                        ->addProductIdFilter($Product->getId())
-                        ->addSelectFilter("start_date = '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($start_date) . "' AND end_date = '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($end_date) . "' AND quote_id = '" . $quoteID . "'");
-
-                    $coll5->addFieldToFilter('stock_id', $stockId);
-
-                    foreach ($coll5 as $oldQuote) {
-                        $oldQty = $oldQuote->getQty();
-                        if ($qtyNotUpdate) {
-                            $qty += $oldQty;
+                        $avail = Mage::helper('payperrentals/rendercart')->checkAvailability($Product, $start_date, $end_date, $quoteID, $qty, $maxQty, $quoteItem->getId(), $stockId);
+                        if(!$avail){
+	                        Mage::throwException(Mage::helper("checkout")->__("The product you requested does not have enough inventory available"));
                         }
-                        break;
-                    }
 
-                    foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
-                        if ($maxQty - $_paramAr[$Product->getId()]['qty'] < $qty - $oldQty) {
-                            Mage::throwException(Mage::helper("checkout")->__("The product you requested does not have enough inventory available"));
-                            return;
-                        }
-                    }
-
-                    $startTimePadding = strtotime(date('Y-m-d', strtotime($start_date)));
-                    $endTimePadding = strtotime(date('Y-m-d', strtotime($end_date)));
-                    $p = 0;
-                    $time_increment = intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Timebox::XML_PATH_APPEARANCE_TIMEINCREMENTS));
-                    $useTimes = ITwebexperts_Payperrentals_Helper_Data::useTimes($Product->getId());
-                    if ($useTimes == 2) {
-                        if ($startTimePadding <= $endTimePadding) {
-                            while ($startTimePadding <= $endTimePadding) {
-                                if (!array_key_exists(date('Y-n-j', $startTimePadding), $bookedArray['booked'])) {
-                                    $bookedTimesArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForTimes($Product->getId(), date('Y-m-d', $startTimePadding), $quoteID, true, $stockId);
-
-                                    if ($p == 0) {
-                                        $startTimePaddingCur = strtotime(date('Y-m-d H:i', strtotime($start_date)));
-                                    } else {
-                                        $startTimePaddingCur = $startTimePadding;
-                                    }
-
-                                    $endTimePaddingCur = strtotime(date('Y-m-d', $startTimePadding) . ' 23:00:00');
-                                    if ($endTimePaddingCur >= strtotime($end_date)) {
-                                        $endTimePaddingCur = strtotime($end_date);
-                                    }
-
-                                    $intersectionArray = array();
-                                    while ($startTimePaddingCur <= $endTimePaddingCur) {
-                                        $dateFormatted = date('H:i:s', $startTimePaddingCur);
-                                        $intersectionArray[] = $dateFormatted;
-                                        $startTimePaddingCur += 60 * $time_increment;
-                                    }
-
-                                    foreach ($bookedTimesArray as $dateFormatted => $_paramAr) {
-                                        //check here if there is an intersection
-                                        if (in_array($dateFormatted, $intersectionArray) && ($maxQty - $_paramAr['qty'] < $qty - $oldQty)) {
-                                            Mage::throwException(Mage::helper("checkout")->__("The product you requested does not have enough inventory available"));
-                                            return;
-                                        }
-                                    }
-                                }
-
-                                $startTimePadding += 60 * 60 * 24; //*time_increment
-                                $p++;
-                            }
-                        }
-                    }
                     /**
                      * Get turnover dates for order item
                      * */
-                    $_turnoverAr = ITwebexperts_Payperrentals_Helper_Data::getTurnoverDatesForOrderItem($Product, strtotime($start_date), strtotime($end_date), $qty);
+                    $_resultDates = ITwebexperts_Payperrentals_Helper_Data::matchStartEndDates($start_date, $end_date);
+                    $_turnoverAr = ITwebexperts_Payperrentals_Helper_Data::getTurnoverDatesForOrderItem($Product, strtotime($_resultDates['start_date']), strtotime($_resultDates['end_date']), $qty);
                     $BQuoteItem = Mage::getModel('payperrentals/reservationquotes');
                     $BQuoteItem
                         ->setProductId($Product->getId())
@@ -497,6 +387,7 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
                 }
             }
 
+            }
         }
         return $this;
     }

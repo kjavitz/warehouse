@@ -34,6 +34,7 @@
             <sales>
                 <rewrite>
                     <quote_item>ITwebexperts_PPRWarehouse_Model_Sales_Quote_Item</quote_item>
+                    <!--<quote>ITwebexperts_PPRWarehouse_Model_Sales_Quote</quote>-->
                 </rewrite>
             </sales>
         </models>
@@ -63,6 +64,7 @@
             <payperrentals>
                 <rewrite>
                     <data>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data</data>
+                    <rendercart>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart</rendercart>
                 </rewrite>
             </payperrentals>
         </helpers>
