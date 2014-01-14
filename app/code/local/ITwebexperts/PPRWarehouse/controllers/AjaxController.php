@@ -462,9 +462,11 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 
             $params = $this->getRequest()->getPost();
             if(!ITwebexperts_Payperrentals_Helper_Data::useNonSequential()){
-                $params = $this->_filterDates($params, array('start_date', 'end_date'));
-                $startingDate = $params['start_date'];
-                $endingDate = $params['end_date'];
+                $newParams['start_date'] = $params['start_date'];
+                $newParams['end_date'] = $params['end_date'];
+                $newParams = ITwebexperts_Payperrentals_Helper_Data::filterDates($newParams, true);
+                $startingDate = $newParams['start_date'];
+                $endingDate = $newParams['end_date'];
             }else{
                 $startingDate = $params['start_date'];
                 $endingDate = $params['end_date'];
@@ -506,16 +508,18 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
                                             break;
                                         }
 
-                                        $isAvailableArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailableWithQty($Product->getId(), $startingDate, $endingDate, $stockId);
+                                        $isAvailableArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailableWithQty($Product->getId(), $qty, $startingDate, $endingDate, $stockId);
                                         $isAvailable = $isAvailableArr['avail'];
                                         if($isAvailable){
                                             break;
                                         }
                                     }
                                     if($isAvailable >= 1){
-                                        $startingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($startingDate)));
-                                        $endingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($endingDate)));
+                                        break;
                                     }
+                                    $startingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($startingDate)));
+                                    $endingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($endingDate)));
+
                                 }
                                 if($isAvailable >= 1){
                                     $availDate = $startingDate;
@@ -548,16 +552,18 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
                                 break;
                             }
 
-							$isAvailableArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailableWithQty($Product->getId(), $startingDate, $endingDate, $stockId);
+							$isAvailableArr = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::isAvailableWithQty($Product->getId(), $qty, $startingDate, $endingDate, $stockId);
 							$isAvailable = $isAvailableArr['avail'];
 							if($isAvailable){
 								break;
 							}
 						}
                         if($isAvailable >= 1){
-						    $startingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($startingDate)));
-						    $endingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($endingDate)));
+                            break;
                         }
+						$startingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($startingDate)));
+						$endingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($endingDate)));
+
 					}
                     if($isAvailable >= 1){
 					    $availDate = $startingDate;
@@ -636,9 +642,11 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 								}
 							}
                             if($isAvailable >= 1){
-							    $startingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($startingDate)));
-							    $endingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($endingDate)));
+                                break;
                             }
+							$startingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($startingDate)));
+							$endingDate = date('Y-m-d', strtotime('+'.$selDays.' days', strtotime($endingDate)));
+
 						}
                         if($isAvailable >= 1){
 						    $availDateMax = $startingDate;
