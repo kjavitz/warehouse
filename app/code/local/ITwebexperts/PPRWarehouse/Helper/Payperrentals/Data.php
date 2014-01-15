@@ -100,8 +100,12 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 
 
                     if (!$_isReport) {
-                        $_booked[$_bookedItemDate][$_orderItemProductId]['period_start'][] = $_bookedItemData['start_end']['period_start'];
-                        $_booked[$_bookedItemDate][$_orderItemProductId]['period_end'][] = $_bookedItemData['start_end']['period_end'];
+                        if (!isset($_booked[$_bookedItemDate][$_orderItemProductId]['period_start']) || strtotime($_booked[$_bookedItemDate][$_orderItemProductId]['period_start']) > strtotime($_bookedItemData['start_end']['period_start'])) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['period_start'] = $_bookedItemData['start_end']['period_start'];
+                        }
+                        if (!isset($_booked[$_bookedItemDate][$_orderItemProductId]['period_end']) || strtotime($_booked[$_bookedItemDate][$_orderItemProductId]['period_end']) < strtotime($_bookedItemData['start_end']['period_end'])) {
+                            $_booked[$_bookedItemDate][$_orderItemProductId]['period_end'] = $_bookedItemData['start_end']['period_end'];
+                        }
                     } else {
                         if (!isset($_booked[$_bookedItemDate][$_orderItemProductId]['orders']['order_ids']) || array_search($_orderItemId, $_booked[$_bookedItemDate][$_orderItemProductId]['orders']['order_ids']) === false) {
                             $_booked[$_bookedItemDate][$_orderItemProductId]['orders']['order_ids'][] = $_orderItemId;
@@ -127,10 +131,10 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
                     $_turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
                 }
 
-                $_itemDateAr = self::getOrderTurnoverForSerialize($_product, $_orderItem);
+                $_itemDateAr = self::getOrderOrQuoteTurnoverForSerialize($_product, $_orderItem);
                 $_itemStartDate = $_itemDateAr['item_start'];
                 $_itemEndDate = $_itemDateAr['item_end'];
-                $_turnoverForOrder = $_itemDateAr['turnover_for_order'];
+                $_turnoverForOrder = $_itemDateAr['turnover_for_order_or_quote'];
 
                 $_qty = $_orderItem->getQty();
 
@@ -151,8 +155,13 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
                         $_booked[$_dateFormatted][$_orderItemProductId]['qty'] = (int)$_qty;
                     }
                     if (!$_isReport) {
+                        if (!isset($_booked[$_dateFormatted][$_orderItemProductId]['period_start']) || strtotime($_booked[$_dateFormatted][$_orderItemProductId]['period_start']) > strtotime($_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'])) {
                         $_booked[$_dateFormatted][$_orderItemProductId]['period_start'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_start'];
+                        }
+                        if (!isset($_booked[$_dateFormatted][$_orderItemProductId]['period_end']) || strtotime($_booked[$_dateFormatted][$_orderItemProductId]['period_end']) < strtotime($_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'])) {
                         $_booked[$_dateFormatted][$_orderItemProductId]['period_end'] = $_turnoverForOrder['full_date_ar'][$_dateFormatted]['start_end']['period_end'];
+                        }
+
                     } else {
                         if (!isset($_booked[$_dateFormatted][$_orderItemProductId]['orders']['order_ids']) || array_search($_orderItemId, $_booked[$_dateFormatted][$_orderItemProductId]['orders']['order_ids']) === false) {
                             $_booked[$_dateFormatted][$_orderItemProductId]['orders']['order_ids'][] = $_orderItemId;
@@ -164,7 +173,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
             }
             if ($_orderItem->getIsUpdateSerialize()) {
                 $_product = $_productLoadAr[$_orderItemProductId];
-                self::getOrderTurnoverForSerialize($_product, $_orderItem);
+                self::getOrderOrQuoteTurnoverForSerialize($_product, $_orderItem);
             }
         }
 
@@ -235,10 +244,10 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
                         $_turnoverTimeAfter = self::getPeriodInSeconds(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_NUMBER), Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_TURNOVER_AFTER_TYPE));
                     }
 
-                    $_itemDateAr = self::getOrderTurnoverForSerialize($_product, $_quoteItem);
+                    $_itemDateAr = self::getOrderOrQuoteTurnoverForSerialize($_product, $_quoteItem, true);
                     $_itemStartDate = $_itemDateAr['item_start'];
                     $_itemEndDate = $_itemDateAr['item_end'];
-                    $_turnoverForOrder = $_itemDateAr['turnover_for_quote'];
+                    $_turnoverForOrder = $_itemDateAr['turnover_for_order_or_quote'];
 
                     $_qty = $_quoteItem->getQty();
 
@@ -275,7 +284,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 
                 if ($_quoteItem->getIsUpdateSerialize()) {
                     $_product = $_productLoadAr[$_quoteItemProductId];
-                    self::getQuoteTurnoverForSerialize($_product, $_quoteItem);
+                    self::getOrderOrQuoteTurnoverForSerialize($_product, $_quoteItem, true);
                 }
             }
                 }

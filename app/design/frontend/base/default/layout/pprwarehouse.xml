@@ -53,6 +53,9 @@
 
     <sales_order_view>
         <reference name="order_items">
+                <action method="setTemplate">
+                    <template>pprwarehouse/sales/order/items.phtml</template>
+                </action>
             <action method="addItemRender">
                 <type>simple</type>
                 <block>payperrentals/sales_order_items_renderer</block>
