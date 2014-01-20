@@ -487,7 +487,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 		}
             $onclick = '';
             if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_GROUPED) {
-                if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && urldecode($this->getRequest()->getParam('read_end_date'))) {
+                if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && (urldecode($this->getRequest()->getParam('read_end_date')) || Mage::helper('payperrentals/config')->isNonSequentialSelect(Mage::app()->getStore()->getId()))) {
                     $associatedProducts = $Product->getTypeInstance(true)
                         ->getAssociatedProducts($Product);
                     //$priceVal = 0;
@@ -522,7 +522,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
                     $priceAmount = -1;
                 }
             }elseif($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE || $Product->getBundlePricingtype() == ITwebexperts_Payperrentals_Model_Product_Bundlepricingtype::PRICING_BUNDLE_FORALL){
-                if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && urldecode($this->getRequest()->getParam('read_end_date'))) {
+                if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && (urldecode($this->getRequest()->getParam('read_end_date')) || Mage::helper('payperrentals/config')->isNonSequentialSelect(Mage::app()->getStore()->getId()))) {
 				$Product = Mage::getModel('catalog/product')->load($Product->getId());
                     $priceAmount = ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
 
@@ -549,7 +549,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 				$priceAmount = -1;
 			}
 		}elseif($this->getRequest()->getParam('bundle_option')){
-                if (urldecode($this->getRequest()->getParam('read_start_date')) != '' && urldecode($this->getRequest()->getParam('read_end_date'))) {
+                if (urldecode($this->getRequest()->getParam('read_start_date')) != '' && (urldecode($this->getRequest()->getParam('read_end_date')) || Mage::helper('payperrentals/config')->isNonSequentialSelect(Mage::app()->getStore()->getId()))) {
 			$selectionIds = $this->getRequest()->getParam('bundle_option');
 			$selectedQtys1 = $this->getRequest()->getParam('bundle_option_qty1');
 			$selectedQtys2 = $this->getRequest()->getParam('bundle_option_qty');
