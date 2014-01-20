@@ -17,15 +17,28 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
 	 */
 	public function checkQuoteItemQty($qty, $summaryQty, $origQty = 0, $quoteItem = null)
 	{
+
 		$originalQty = $this->getData('qty');
 		if($quoteItem && $quoteItem->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
+
 			$product = $quoteItem->getProduct();
-			$options = $quoteItem->getOptionsByCode();
-			$startDate = $options['start_date']->getValue();
-			$endDate = $options['end_date']->getValue();
+
+            if($quoteItem->getParentItem()){
+                $options = $quoteItem->getParentItem()->getProductOptionByCode('info_buyRequest');
+            }else{
+                $options = $quoteItem->getProductOptionByCode('info_buyRequest');
+            }
+			$startDate = $options['start_date'];
+			$endDate = $options['end_date'];
+
 			$stockId = $this->getStockId(); // $quoteItem->getStockId();
-			$newStock = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product->getId(), $startDate, $endDate, 0, $stockId);
-			$newQty = isset($newStock['avail']) ? $newStock['avail'] : 0;
+
+            if($startDate && $endDate){
+                $newStock = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product, $startDate, $endDate, 0, $stockId);
+			    $newQty = isset($newStock['avail']) ? $newStock['avail'] : 0;
+            }else{
+                $newQty = 10000000;
+            }
 			$this->setQty($newQty);
 		}
 		$return = parent::checkQuoteItemQty( $qty, $summaryQty, $origQty );
@@ -60,6 +73,18 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
 		return $this->getData('qty');
 	}
 
+    public function getStockId(){
+		$product = $this->getProduct();
+		if($product && $product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE)
+		{
+				$options = $product->getCustomOptions();
+				if(isset($options['stock_id']))
+				{
+                    return $options['stock_id'];
+                }
+        }
+        return parent::getStockId();
+    }
 	protected function _beforeSave()
 	{
 		return parent::_beforeSave();

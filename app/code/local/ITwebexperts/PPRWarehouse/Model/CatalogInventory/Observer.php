@@ -7,6 +7,26 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Observer extends Innoexts
 {
 
 	/**
+     * Cancel order item
+     *
+     * @param Varien_Event_Observer $observer
+     *
+     * @return Innoexts_Warehouse_Model_Cataloginventory_Observer
+     */
+    public function cancelOrderItem($observer)
+    {
+        $item       = $observer->getEvent()->getItem();
+        if($item->getProductType() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
+            $children   = $item->getChildrenItems();
+            $qty        = $item->getQtyOrdered() - max($item->getQtyShipped(), $item->getQtyInvoiced()) - $item->getQtyCanceled();
+            if ($item->getId() && ($productId = $item->getProductId()) && empty($children) && $qty) {
+                $this->getCatalogInventoryHelper()->getStockSingleton($item->getStockId())->backItemQty($productId, $qty);
+            }
+        }
+        return $this;
+    }
+    //I should modify this function for frq... so no checking of qty should be done for rfq.
+	/**
 	 * override for using the new ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item::checkQuoteItemQty
 	 * we need to pass the quoteItem to that method
 	 * @param Innoexts_Warehouse_Model_Sales_Quote_Item $quoteItem
@@ -20,6 +40,9 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Observer extends Innoexts
 		$options    = $quoteItem->getQtyOptions();
 		$qty        = $product->getTypeInstance(true)->prepareQuoteItemQty($quoteItem->getQty(), $product);
 		$quoteItem->setData('qty', $qty);
+        if(Mage::app()->getRequest()->getParam('isrfq') || (Mage::app()->getRequest()->getControllerName() == 'adminhtml_quote_edit') || (Mage::app()->getRequest()->getControllerName() == 'adminhtml_quote_create') ){
+            return $this;
+        }
 		if ($stockItem) {
 			$result = $stockItem->checkQtyIncrements($qty);
 			if ($result->getHasError()) {
@@ -100,6 +123,10 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Observer extends Innoexts
 		$stockItem = $quoteItem->getStockItem();
 		$product = $quoteItem->getProduct();
 		$qty = $quoteItem->getQty();
+        if(Mage::app()->getRequest()->getParam('isrfq') || (Mage::app()->getRequest()->getControllerName() == 'adminhtml_quote_edit') || (Mage::app()->getRequest()->getControllerName() == 'adminhtml_quote_create') ){
+            //or is added in admin from quote editor/// when returning stock too//on preparecartadvanced
+            return $this;
+        }
 		if (!$stockItem instanceof Mage_CatalogInventory_Model_Stock_Item) {
 			$this->throwException('The stock item for Product is not valid.');
 		}

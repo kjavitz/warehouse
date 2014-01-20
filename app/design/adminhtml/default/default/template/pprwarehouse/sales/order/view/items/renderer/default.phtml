@@ -2,12 +2,12 @@
 <?php /* @var $this Mage_Adminhtml_Block_Sales_Order_View_Items_Renderer_Default */ ?>
 <?php $_item = $this->getItem() ?>
 <?php
-$_product1 = Mage::getModel('catalog/product')->load($_item->getProduct()->getId());
-$_stockId = $_item->getStockId();
-$qtyStock = Mage::helper('pprwarehouse')->getQtyForProductAndStock($_item->getProduct(), $_stockId);
-$current_stock = $qtyStock;
-$qty = $_item->getQtyOrdered();
-$remaining_stock = $current_stock - $qty;
+//$_product1 = Mage::getModel('catalog/product')->load($_item->getProduct()->getId());
+//$_stockId = $_item->getStockId();
+//$qtyStock = Mage::helper('pprwarehouse')->getQtyForProductAndStock($_item->getProduct(), $_stockId);
+//$current_stock = $qtyStock;
+//$qty = $_item->getQtyOrdered();
+//$remaining_stock = $current_stock - $qty;
 if ($options1 = $this->getItem()->getProductOptions()) {
 	//$startDateLabel = $this->getItem()->getIsVirtual() ? $this->__("Subscription start:") : $this->__("First delivery:");
 	if(isset($options1['info_buyRequest'])) {
@@ -157,7 +157,7 @@ if ($options1 = $this->getItem()->getProductOptions()) {
 <td><?php echo $this->getColumnHtml($_item, 'qty') ?></td>
 
     <td>
-        <input type="hidden" name="stock_product_id" value="<?php echo $_item->getProduct()->getId() ?>" />
+        <input type="hidden" dates="<?php echo $start_date; ?>,<?php echo $end_date;?>" qty="<?php echo $_item->getQtyOrdered();?>" stock_id="<?php echo $_item->getStockId() ?>" name="stock_product_id" value="<?php echo $_item->getProduct()->getId() ?>" />
         <span class="currentstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span>
     </td>
     <td><span class="remainingstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span></td>

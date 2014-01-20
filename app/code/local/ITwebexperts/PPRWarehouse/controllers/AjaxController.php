@@ -279,7 +279,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 	}
 
 
-	public function updateBookedAction()
+	public function updateBookedForProductAction()
 	{
 		/* @var $helper ITwebexperts_PPRWarehouse_Helper_Data */
 		$helper = Mage::helper('pprwarehouse');

@@ -21,7 +21,7 @@ class ITwebexperts_PPRWarehouse_Block_Adminhtml_Sales_Order_Return_Create_Form e
 		if( ! $this->hasData('sent_items')){
 			/* @var $sentItems ITwebexperts_Payperrentals_Model_Mysql4_Sendreturn_Collection */
 			$sentItems = Mage::getResourceModel('payperrentals/sendreturn_collection');
-			$sentItems->addFieldToFilter('order_id', $this->getOrder()->getIncrementId())
+			$sentItems->addFieldToFilter('order_id', $this->getOrder()->getId())
 				->addFieldToFilter('return_date', '0000-00-00 00:00:00');
 			$this->setData('sent_items', $sentItems);
 		}
