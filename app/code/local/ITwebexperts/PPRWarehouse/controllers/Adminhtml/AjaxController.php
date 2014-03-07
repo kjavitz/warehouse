@@ -9,11 +9,6 @@ require_once 'ITwebexperts/Payperrentals/controllers/Adminhtml/AjaxController.ph
 class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Payperrentals_Adminhtml_AjaxController
 {
 
-    /**
-     * override for setting the stock_id (we won't need this after refactoring PPR)
-     * I think this action is not used anymore
-     */
-    /*updated*/
     public function sendSelectedAction()
     {
         $sns = $this->getRequest()->getParam('sn');
@@ -94,7 +89,7 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         );
         $this->getResponse()->setBody(Zend_Json::encode($results));
     }
-    /*updated*/
+
     public function getPriceandavailabilityAction()
     {
         if (!$this->getRequest()->getParam('product_id')) {
@@ -384,7 +379,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $this->getResponse()->setBody(Zend_Json::encode($price));
     }
 
-    /*updated*/
     public function getSerialNumbersbyItemIdAction()
     {
         $query = $this->getRequest()->getParam('value');
@@ -407,7 +401,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
 
         $this->getResponse()->setBody(Zend_Json::encode($results));
     }
-
 
     public function getEventsAction()
     {
@@ -465,7 +458,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $this->getResponse()->setBody(Zend_Json::encode($_events));
     }
 
-
     public function getDateDetailsAction()
     {
         $_orderList = '<table cellpadding="10" cellspacing="10" border="0" style="min-width:350px;"><tr><td style="font-weight: bold">' . $this->__('Order ID') . '</td><td style="font-weight: bold">' . $this->__('Customer Name') . '</td><td style="font-weight: bold">' . $this->__('Start') . '</td><td style="font-weight: bold">' . $this->__('End') . '</td><td style="font-weight: bold">' . $this->__('Qty') . '</td><td style="font-weight: bold">' . $this->__('View Order') . '</td></tr>';
@@ -519,9 +511,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $this->getResponse()->setBody(Zend_Json::encode($_details));
     }
 
-    /**
-     *
-     */
     public function getProductsPricesAction()
     {
         if (!$this->getRequest()->getParam('products')) {

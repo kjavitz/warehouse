@@ -40,14 +40,14 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart extends ITwebexp
     }
 
     public function prepareForCartAdvanced(Varien_Object $buyRequest, $product = null, $processMode = null, $productType = 'simple'){
-        if (!ITwebexperts_Payperrentals_Helper_Data::isAllowedRenting()) {
-            return Mage::helper('payperrentals')->__('You are not allowed renting. Please login on CNH');
+        if (!ITwebexperts_Payperrentals_Helper_Sso::isAllowedRenting()) {
+            return Mage::helper('payperrentals')->__('You are not allowed renting. Please login on main website');
         }
         if($productType != 'simple' && $product->getIsReservation() == ITwebexperts_Payperrentals_Model_Product_Isreservation::STATUS_DISABLED){
             return 'call_parent';
         }else{
             if ($buyRequest->getIsReservation() == ITwebexperts_Payperrentals_Model_Product_Isreservation::STATUS_RENTAL) {
-                return ITwebexperts_Payperrentals_Helper_Data::addProductToQueue($product, $buyRequest);
+                return ITwebexperts_Payperrentals_Helper_Membership::addProductToQueue($product, $buyRequest);
             } else {
                 if( ! $buyRequest->getStartDate() /*|| ($buyRequest->getGlobalDatesNot())*/)
                 {

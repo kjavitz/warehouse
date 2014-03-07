@@ -9,191 +9,6 @@ require_once 'ITwebexperts/Payperrentals/controllers/AjaxController.php';
 class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrentals_AjaxController
 {
 
-    /*todo need update rental 1.1.4*/
-	public function updateBookedForProductActionBK()
-	{
-		/* @var $helper ITwebexperts_PPRWarehouse_Helper_Data */
-		$helper = Mage::helper('pprwarehouse');
-
-		/* @var $Product Mage_Catalog_Model_Product */
-		$Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));
-		$booked = array();
-		$isDisabled = false;
-
-		$qty = urldecode($this->getRequest()->getParam('qty'));
-
-		if($Product->isConfigurable()){
-			$Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
-			$Product = Mage::getModel('catalog/product')->load($Product->getId());
-		}
-        if(is_object($Product)){
-        if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_GROUPED) {
-            if (is_object($Product)) {
-                $associatedProducts = $Product->getTypeInstance(true)
-                    ->getAssociatedProducts($Product);
-
-                foreach ($associatedProducts as $Product) {
-                    //Zend_Debug::dump($selection->getData());
-                    if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                        foreach($helper->getValidStockIds() as $stockId)
-                        {
-                            $isDisabled = false;
-                            $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
-                            if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
-                                $maxQty = 100000;
-                            }
-                            if($maxQty >= $qty){
-                                $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, false, $stockId);
-                                /*foreach($bookedArray as $dateFormatted => $qtyPerDay){
-                                    if($maxQty < $qtyPerDay + $qty){
-                                        $booked[] = $dateFormatted;
-                                    }
-                                }*/
-                                foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
-                                    if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
-                                        $booked[] = $dateFormatted;
-                                    }
-                                }
-                            }
-                            else{
-                                $isDisabled = true;
-                            }
-
-                            // valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
-                            if( ! $isDisabled){
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-		elseif($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE){
-			if(is_object($Product))
-			{
-				foreach($helper->getValidStockIds() as $stockId)
-				{
-					$isDisabled = false;
-					$maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
-					if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
-						$maxQty = 100000;
-					}
-					if($maxQty >= $qty){
-						$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, false, $stockId);
-						/*foreach($bookedArray as $dateFormatted => $qtyPerDay){
-							if($maxQty < $qtyPerDay + $qty){
-								$booked[] = $dateFormatted;
-							}
-						}*/
-                        foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
-                            if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
-                                $booked[] = $dateFormatted;
-                            }
-                        }
-					}
-					else{
-						$isDisabled = true;
-					}
-
-					// valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
-					if( ! $isDisabled){
-						break;
-					}
-				}
-
-			}
-		}
-		elseif($this->getRequest()->getParam('bundle_option')){
-			//get selected bundle id
-			$selectionIds = $this->getRequest()->getParam('bundle_option');
-			$selectedQtys1 = $this->getRequest()->getParam('bundle_option_qty1');
-			$selectedQtys2 = $this->getRequest()->getParam('bundle_option_qty');
-			if($selectedQtys1)
-				foreach($selectedQtys1 as $i1 => $j1){
-					if(is_array($j1)){
-						foreach($j1 as $k1 => $p1){
-							$selectedQtys[$i1][$k1] = $qty * $p1;
-						}
-					}else{
-						$selectedQtys[$i1] = $qty * $j1;
-					}
-				}
-			if($selectedQtys2)
-				foreach($selectedQtys2 as $i1 => $j1){
-					if(is_array($j1)){
-						foreach($j1 as $k1 => $p1){
-							$selectedQtys[$i1][$k1] = $qty * $p1;
-						}
-					}else{
-						$selectedQtys[$i1] = $qty * $j1;
-					}
-				}
-			//print_r($selectedQtys);
-			$selections = $Product->getTypeInstance(true)->getSelectionsByIds($selectionIds, $Product);
-			$qty1 = $qty;
-			foreach ($selections->getItems() as $selection) {
-				//print_r($selection->debug());
-				//echo '-------------';
-				$Product = Mage::getModel('catalog/product')->load($selection->getProductId());
-				//Zend_Debug::dump($selection->getData());
-				if($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
-
-					if(isset($selectedQtys[$selection->getOptionId()][$selection->getSelectionId()])){
-						$qty = $selectedQtys[$selection->getOptionId()][$selection->getSelectionId()];
-					}elseif(isset($selectedQtys[$selection->getOptionId()])){
-						$qty = $selectedQtys[$selection->getOptionId()];
-					}else{
-						$qty = $qty1;
-					}
-					//echo $qty.'-';
-					foreach($helper->getValidStockIds() as $stockId)
-					{
-						$isDisabled = false;
-						$maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
-						if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
-							$maxQty = 100000;
-						}
-						if($maxQty >= $qty){
-							$bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, true, $stockId);
-
-                            foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
-                                if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
-                                    $booked[] = $dateFormatted;
-                                }
-                            }
-						}else{
-							$isDisabled = true;
-							//break;
-						}
-
-						// valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
-						if( ! $isDisabled){
-							break;
-						}
-
-					}
-				}
-			}
-		}
-
-		$bookedHtml = array(
-			'bookedDates' =>  implode(',', $booked),
-			'isDisabled'  =>  $isDisabled
-		);
-        }else{
-
-                $bookedHtml = array(
-                    'bookedDates' => '',
-                    'isDisabled' => true
-                );
-
-        }
-
-		$this
-			->getResponse()
-			->setBody(Zend_Json::encode($bookedHtml));
-	}
-
     public function updateBookedForProductAction()
     {
         $helper = Mage::helper('pprwarehouse');
@@ -482,17 +297,12 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
                 if (is_object($Product) && urldecode($this->getRequest()->getParam('read_start_date')) != '' && (urldecode($this->getRequest()->getParam('read_end_date')) || ITwebexperts_Payperrentals_Helper_Data::useNonSequential())){
                     $associatedProducts = $Product->getTypeInstance(true)
                         ->getAssociatedProducts($Product);
-                    //$priceVal = 0;
                     foreach ($associatedProducts as $Product) {
-                        //Zend_Debug::dump($selection->getData());
                         if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
 
                             $Product = Mage::getModel('catalog/product')->load($Product->getId());
                             $_productAssoc = $Product;
                             $priceAmount = ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
-                            //if($priceAmount == -1){
-
-                            //}
                             $availDate = false;
 
                             if ($selDays !== false) {
@@ -585,7 +395,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 							$selectedQtys[$i1][$k1] = $p1;
 						}
 					}else{
-						$selectedQtys[$i1] = /*$qty **/ $j1;
+						$selectedQtys[$i1] = $j1;
 					}
 				}
 			if($selectedQtys2)
@@ -595,7 +405,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 							$selectedQtys[$i1][$k1] = $p1;
 						}
 					}else{
-						$selectedQtys[$i1] = /*$qty **/ $j1;
+						$selectedQtys[$i1] = $j1;
 					}
 				}
 
@@ -615,7 +425,6 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 
 				if($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
                             $priceAmount = $qty * ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
-					//echo $qty.'-'.$priceAmount;
 					if($priceAmount == -1){
 						$priceVal = -1;
 						break;
@@ -656,7 +465,7 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
 						$availDate = $availDateMax;
 					}
 
-					$priceVal = $priceVal + /*$qty **/ $priceAmount;
+					$priceVal = $priceVal + $priceAmount;
 				}
 			}
 			$priceAmount = $priceVal;
@@ -709,6 +518,195 @@ class ITwebexperts_PPRWarehouse_AjaxController extends ITwebexperts_Payperrental
             );
         }
         $this->getResponse()->setBody(Zend_Json::encode($price));
+    }
+
+
+
+    /*This part down is deprecated should be removed*/
+
+    /*todo need update rental 1.1.4*/
+    public function updateBookedForProductActionBK()
+    {
+        /* @var $helper ITwebexperts_PPRWarehouse_Helper_Data */
+        $helper = Mage::helper('pprwarehouse');
+
+        /* @var $Product Mage_Catalog_Model_Product */
+        $Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));
+        $booked = array();
+        $isDisabled = false;
+
+        $qty = urldecode($this->getRequest()->getParam('qty'));
+
+        if($Product->isConfigurable()){
+            $Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
+            $Product = Mage::getModel('catalog/product')->load($Product->getId());
+        }
+        if(is_object($Product)){
+            if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_GROUPED) {
+                if (is_object($Product)) {
+                    $associatedProducts = $Product->getTypeInstance(true)
+                        ->getAssociatedProducts($Product);
+
+                    foreach ($associatedProducts as $Product) {
+                        //Zend_Debug::dump($selection->getData());
+                        if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
+                            foreach($helper->getValidStockIds() as $stockId)
+                            {
+                                $isDisabled = false;
+                                $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+                                if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
+                                    $maxQty = 100000;
+                                }
+                                if($maxQty >= $qty){
+                                    $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, false, $stockId);
+                                    /*foreach($bookedArray as $dateFormatted => $qtyPerDay){
+                                        if($maxQty < $qtyPerDay + $qty){
+                                            $booked[] = $dateFormatted;
+                                        }
+                                    }*/
+                                    foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+                                        if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
+                                            $booked[] = $dateFormatted;
+                                        }
+                                    }
+                                }
+                                else{
+                                    $isDisabled = true;
+                                }
+
+                                // valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
+                                if( ! $isDisabled){
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            elseif($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE){
+                if(is_object($Product))
+                {
+                    foreach($helper->getValidStockIds() as $stockId)
+                    {
+                        $isDisabled = false;
+                        $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+                        if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
+                            $maxQty = 100000;
+                        }
+                        if($maxQty >= $qty){
+                            $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, false, $stockId);
+                            /*foreach($bookedArray as $dateFormatted => $qtyPerDay){
+                                if($maxQty < $qtyPerDay + $qty){
+                                    $booked[] = $dateFormatted;
+                                }
+                            }*/
+                            foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+                                if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
+                                    $booked[] = $dateFormatted;
+                                }
+                            }
+                        }
+                        else{
+                            $isDisabled = true;
+                        }
+
+                        // valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
+                        if( ! $isDisabled){
+                            break;
+                        }
+                    }
+
+                }
+            }
+            elseif($this->getRequest()->getParam('bundle_option')){
+                //get selected bundle id
+                $selectionIds = $this->getRequest()->getParam('bundle_option');
+                $selectedQtys1 = $this->getRequest()->getParam('bundle_option_qty1');
+                $selectedQtys2 = $this->getRequest()->getParam('bundle_option_qty');
+                if($selectedQtys1)
+                    foreach($selectedQtys1 as $i1 => $j1){
+                        if(is_array($j1)){
+                            foreach($j1 as $k1 => $p1){
+                                $selectedQtys[$i1][$k1] = $qty * $p1;
+                            }
+                        }else{
+                            $selectedQtys[$i1] = $qty * $j1;
+                        }
+                    }
+                if($selectedQtys2)
+                    foreach($selectedQtys2 as $i1 => $j1){
+                        if(is_array($j1)){
+                            foreach($j1 as $k1 => $p1){
+                                $selectedQtys[$i1][$k1] = $qty * $p1;
+                            }
+                        }else{
+                            $selectedQtys[$i1] = $qty * $j1;
+                        }
+                    }
+                //print_r($selectedQtys);
+                $selections = $Product->getTypeInstance(true)->getSelectionsByIds($selectionIds, $Product);
+                $qty1 = $qty;
+                foreach ($selections->getItems() as $selection) {
+                    //print_r($selection->debug());
+                    //echo '-------------';
+                    $Product = Mage::getModel('catalog/product')->load($selection->getProductId());
+                    //Zend_Debug::dump($selection->getData());
+                    if($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
+
+                        if(isset($selectedQtys[$selection->getOptionId()][$selection->getSelectionId()])){
+                            $qty = $selectedQtys[$selection->getOptionId()][$selection->getSelectionId()];
+                        }elseif(isset($selectedQtys[$selection->getOptionId()])){
+                            $qty = $selectedQtys[$selection->getOptionId()];
+                        }else{
+                            $qty = $qty1;
+                        }
+                        //echo $qty.'-';
+                        foreach($helper->getValidStockIds() as $stockId)
+                        {
+                            $isDisabled = false;
+                            $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
+                            if(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook($Product)){
+                                $maxQty = 100000;
+                            }
+                            if($maxQty >= $qty){
+                                $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($Product->getId(), null, null, 0, true, $stockId);
+
+                                foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
+                                    if ($maxQty < $_paramAr[$Product->getId()]['qty'] + $qty) {
+                                        $booked[] = $dateFormatted;
+                                    }
+                                }
+                            }else{
+                                $isDisabled = true;
+                                //break;
+                            }
+
+                            // valid stock found, stop checking (or we should continue for getting all the booked possibilities?)
+                            if( ! $isDisabled){
+                                break;
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            $bookedHtml = array(
+                'bookedDates' =>  implode(',', $booked),
+                'isDisabled'  =>  $isDisabled
+            );
+        }else{
+
+            $bookedHtml = array(
+                'bookedDates' => '',
+                'isDisabled' => true
+            );
+
+        }
+
+        $this
+            ->getResponse()
+            ->setBody(Zend_Json::encode($bookedHtml));
     }
     public function getPriceActionNew()
     {

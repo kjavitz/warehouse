@@ -11,7 +11,7 @@ class ITwebexperts_PPRWarehouse_Block_Payperrentals_Adminhtml_Quantityreport
 	/**
 	 * @return array
 	 */
-	public function getSotckIdFilter()
+	public function getStockIdFilter()
 	{
 		$warehousesParam = $this->getRequest()->getParam('warehouses');
 		if($warehousesParam){

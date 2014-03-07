@@ -148,8 +148,6 @@ class ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer extends ITwebexpert
 
 	}
 
-
-
 	/**
 	 * override for saving the stock_id for the reservationorder, and using the correct qty for the stock instead of getPayperrentalsQuantity
 	 * this should be checked too because we have a very denormalized table right now, why we have a qty and also a reference to the quote/order item?

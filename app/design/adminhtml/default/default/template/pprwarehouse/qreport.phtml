@@ -1,7 +1,7 @@
 <?php /* @var $this ITwebexperts_PPRWarehouse_Block_Payperrentals_Adminhtml_Quantityreport */ ?>
 <?php
 $_stockIds = Mage::helper('warehouse')->getStockIds();
-$_stockIdFilter = $this->getSotckIdFilter(); // Mage::registry('stock_id_filter');
+$_stockIdFilter = $this->getStockIdFilter(); // Mage::registry('stock_id_filter');
 
 $_warehouses = Mage::helper('warehouse')->getWarehouses();
 ?>
@@ -183,6 +183,9 @@ $resources[] = array(
 		var m = date.getMonth();
 		var y = date.getFullYear();
 		var myAjax = [];
+        var beforeQty = [];
+        var beforeStart = [];
+        var currentView = '';
 		var calendar = $jppr('#calendarProducts').fullCalendar({
 			header: {
 				left: 'prev,next today',
@@ -204,7 +207,7 @@ $resources[] = array(
 			selectable: false,
 			minTime: <?php echo intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_OPEN_TIME));?>,
 			maxTime: <?php echo (intval(Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_STORE_CLOSE_TIME))+1);?>,
-			slotMinutes: <?php echo Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Timebox::XML_PATH_APPEARANCE_TIMEINCREMENTS);?>,
+            slotMinutes: <?php echo Mage::helper('payperrentals/config')->getTimeIncrement();?>,
 			selectHelper: false,
 			resources: <?php echo $resources_JSON_array;?>,
 			events:{
@@ -219,7 +222,7 @@ $resources[] = array(
 				color: 'yellow',   // a non-ajax option
 				textColor: 'black' // a non-ajax option
 			},
-			height: calcCalendarHeight(),
+            //height: calcCalendarHeight(),
             aspectRatio: 12,
 			loading: function (bool) {
 				if (bool)
@@ -227,8 +230,43 @@ $resources[] = array(
 				else
 					$jppr('#loading-mask').hide();
 			},
-			viewDisplay: function(view) {
+            eventReRender: function(event, element) {
+            },
+            eventRender: function(event, element) {
+                if(currentView.name == 'resourceMonth'){
+                    if(/*event.is_hour == true && */typeof beforeQty[event.resource] != 'undefined' && typeof beforeQty[event.resource][event.df] != 'undefined' && event.is_hour){
+                        if(parseInt(beforeQty[event.resource][event.df].qty) < parseInt(event.qty)){
+
+                            if(beforeQty[event.resource][event.df].is_hour){
+                                beforeQty[event.resource][event.df].qty = parseInt(event.qty);
+                            }else{
+                                beforeQty[event.resource][event.df].qty = parseInt(beforeQty[event.resource][event.df].qty) + parseInt(event.qty);
+                            }
+                        }
+                        beforeStart[event.resource][event.df].find('.fc-event-title').html((beforeQty[event.resource][event.df].qty+'/'+event.maxqty)+'(h)');
+                        beforeStart[event.resource][event.df].find('.fc-event-title').css('background-color', 'green');
+                        beforeStart[event.resource][event.df].find('.fc-event-title').css('color', 'white');
+                        beforeStart[event.resource][event.df].find('.fc-event-inner').css('background-color', 'green');
+                        element.hide();
+                        //event.title = beforeQty[event.df]+'/'+event.maxqty;
+                    }else{
+                        if(typeof beforeQty[event.resource] == 'undefined'){
+                            beforeQty[event.resource] = [];
+                        }
+                        if(typeof beforeStart[event.resource] == 'undefined'){
+                            beforeStart[event.resource] = [];
+                        }
+                        beforeQty[event.resource][event.df] = event;
+                        beforeStart[event.resource][event.df] = element;
+                    }
+                }
+            },
+            beforeViewDisplay: function (view) {
 				myAjax = [];
+                //delete beforeQty;
+                beforeQty = [];
+                beforeStart = [];
+                currentView = $jppr('#calendarProducts').fullCalendar('getView');
 			},
 			/* eventClick: function(event) {
 			 if (event.url) {
@@ -304,9 +342,7 @@ $resources[] = array(
         $jppr('.fc-header-title').html($jppr('.fc-header-title').html() + "<div class='fc-header-title-description'><?php echo $this->__('Booked Inventory / Available Inventory') ?></div>");
 
 		function calcCalendarHeight() {
-			var h = $jppr(window).height() - 40;
-			//console.log(h);
-			return h;
+            return $jppr(window).height() - 40;
 		}
 
 		$jppr(window).resize(function() {

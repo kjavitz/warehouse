@@ -19,9 +19,6 @@
                 <rewrite>
                     <product_backend_serialnumbers>ITwebexperts_PPRWarehouse_Model_Payperrentals_Product_Backend_Serialnumbers</product_backend_serialnumbers>
                     <observer>ITwebexperts_PPRWarehouse_Model_Payperrentals_Observer</observer>
-                    <product_type_reservation>ITwebexperts_PPRWarehouse_Model_Payperrentals_Product_Type_Reservation</product_type_reservation>
-                    <product_type_grouped>ITwebexperts_PPRWarehouse_Model_Payperrentals_Product_Type_Grouped</product_type_grouped>
-                    <product_type_configurable>ITwebexperts_PPRWarehouse_Model_Payperrentals_Product_Type_Configurable</product_type_configurable>
                 </rewrite>
             </payperrentals>
             <cataloginventory>
@@ -65,6 +62,7 @@
                 <rewrite>
                     <data>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data</data>
                     <rendercart>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart</rendercart>
+                    <inventory>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory</inventory>
                 </rewrite>
             </payperrentals>
         </helpers>
@@ -86,6 +84,15 @@
                     </pprwarehouse>
                 </observers>
             </sales_order_save_before>
+            <after_getquantity>
+                <observers>
+                    <pprwarehouse_getquantity>
+                        <type>singleton</type>
+                        <class>pprwarehouse/observer</class>
+                        <method>getMaxQuantity</method>
+                    </pprwarehouse_getquantity>
+                </observers>
+            </after_getquantity>
         </events>
     </global>
     <frontend>

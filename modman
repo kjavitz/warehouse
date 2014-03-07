@@ -47,5 +47,6 @@ app/design/frontend/base/default/template/pprwarehouse/sales/order/shipment/item
 app/etc/modules/ITwebexperts_PPRWarehouse.xml 
 skin/adminhtml/default/default/images/truck.png 
 app/code/local/ITwebexperts/PPRWarehouse/Helper/Payperrentals/Rendercart.php
+app/code/local/ITwebexperts/PPRWarehouse/Helper/Payperrentals/Inventory.php
 app/code/local/ITwebexperts/PPRWarehouse/Model/Sales/Quote.php
 app/design/frontend/base/default/template/pprwarehouse/sales/order/items.phtml

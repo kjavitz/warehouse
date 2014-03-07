@@ -410,7 +410,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 			$isAvailable = true;
 			$maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
 
-			$minQty = self::getStockOnly($productId, $start_date, $end_date, $stockId);
+			$minQty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::getStockOnly($productId, $start_date, $end_date, $stockId);
 
             if ($maxQty < $qty || $minQty < $qty) {
                 $isAvailable = false;
@@ -507,7 +507,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
             if ($maxQty < $qty) {
                 return array('avail' => false, 'maxqty' => $maxQty);
             }
-            $qty = self::getStockOnly($productId, $start_date, $end_date, $stockId);
+            $qty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::getStockOnly($productId, $start_date, $end_date, $stockId);
             if ($qty > 0) {
                 return array('avail' => true, 'maxqty' => $qty);
             } else {
@@ -589,40 +589,6 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 		return $stockAvail;
 	}
 
-
-    /**
-     * @param $productId
-     * @param $start_date
-     * @param $end_date
-     * @return int
-     */
-    public static function getStockOnly($productId, $start_date, $end_date, $stockId = null)
-    {
-        $Product = self::_initProduct($productId);
-        $productId = $Product->getId();
-
-        $helper = Mage::helper('pprwarehouse');
-        $maxQty = $helper->getQtyForProductAndStock($Product, $stockId);
-
-        $bookedArray = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($productId, $start_date, $end_date, 0, false, $stockId);
-        $minQty = 1000000;
-        foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
-            if (strtotime($dateFormatted) >= strtotime($start_date) && strtotime($dateFormatted) <= strtotime($end_date)) {
-                if ($minQty > ($maxQty - $_paramAr[$productId]['qty'])) {
-                    $minQty = $maxQty - $_paramAr[$productId]['qty'];
-                }
-            }
-        }
-
-        if ($minQty == 1000000) {
-            $minQty = $helper->getQtyForProductAndStock($Product, $stockId);
-        }
-
-        return $minQty;
-    }
-
-
-
 	/**
 	 * @param $product
 	 * @param $start_date
@@ -635,7 +601,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
 	{
         $stockArr = array();
 
-        $minQty = self::getStockOnly($productId, $start_date, $end_date, $stockId);
+        $minQty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::getStockOnly($productId, $start_date, $end_date, $stockId);
 
         if (!$qty) {
             $qty = 1;
