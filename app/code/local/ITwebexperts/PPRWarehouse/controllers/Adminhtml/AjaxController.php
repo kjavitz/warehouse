@@ -90,295 +90,6 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $this->getResponse()->setBody(Zend_Json::encode($results));
     }
 
-    public function getPriceandavailabilityAction()
-    {
-        if (!$this->getRequest()->getParam('product_id')) {
-            $price = array(
-                'amount' => -1,
-                'available' => false,
-                'stockAvail' => 0,
-                'stockRest' => 0,
-                'stockAvailText' => Mage::helper('payperrentals')->__('This product not available in store'),
-                'stockRestText' => Mage::helper('payperrentals')->__('This product not available in store'),
-                'maxqty' => 0,
-                'formatAmount' => -1
-            );
-
-            $this->getResponse()->setBody(Zend_Json::encode($price));
-            return;
-        }
-
-        $stockId = $this->getRequest()->getParam('stock_id');
-        if (!$stockId) {
-            /** @var Innoexts_Warehouse_Helper_Data $helper */
-            $helper = Mage::helper('warehouse');
-            $stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
-        }
-
-        $Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));
-        if ($Product->isConfigurable()) {
-            $Product = Mage::getModel('catalog/product_type_configurable')->getProductByAttributes($this->getRequest()->getParam('super_attribute'), $Product);
-        }
-        if (!is_object($Product)) {
-            $price = array(
-                'amount' => -1,
-                'available' => false,
-                'stockAvail' => 0,
-                'stockRest' => 0,
-                'stockAvailText' => Mage::helper('payperrentals')->__('Please select configuration'),
-                'stockRestText' => Mage::helper('payperrentals')->__('Please select configuration'),
-                'maxqty' => 0,
-                'formatAmount' => -1
-            );
-
-            $this->getResponse()->setBody(Zend_Json::encode($price));
-            return;
-        }
-        $qty = urldecode($this->getRequest()->getParam('qty'));
-        if (!$qty) {
-            $qty = 1;
-        }
-        $qty1 = $qty;
-        $customerGroup = ITwebexperts_Payperrentals_Helper_Data::getCustomerGroup();
-
-        $startingDate = urldecode($this->getRequest()->getParam('start_date'));
-        $endingDate = urldecode($this->getRequest()->getParam('end_date'));
-        $stockAvail = 0;
-        $_bundleOverbooking = false;
-        if ($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE || $Product->getBundlePricingtype() == ITwebexperts_Payperrentals_Model_Product_Bundlepricingtype::PRICING_BUNDLE_FORALL) {
-            /*if (is_object($Product)) {*/
-            $Product = Mage::getModel('catalog/product')->load($Product->getId());
-            $priceAmount = ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
-            /*} else {
-                $priceAmount = -1;
-            }*/
-
-            /** Not used part of code*/
-            /*if ($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE) {
-                $isAvailableArr = ITwebexperts_Payperrentals_Helper_Data::isAvailableWithQty($Product, $qty, $startingDate, $endingDate);
-                $isAvailable = $isAvailableArr['avail'];
-                $maxQty = $isAvailableArr['maxqty'];
-
-            } else*/
-            if ($this->getRequest()->getParam('bundle_option')) {
-                $selectionIds = $this->getRequest()->getParam('bundle_option');
-                $selectedQtys = $this->getRequest()->getParam('bundle_option_qty');
-                foreach ($selectedQtys as $i1 => $j1) {
-                    if (is_array($j1)) {
-                        foreach ($j1 as $k1 => $p1) {
-                            $selectedQtys[$i1][$k1] = $qty * ($p1 == 0 ? 1 : $p1);
-                        }
-                    } else {
-                        $selectedQtys[$i1] = $qty * ($j1 == 0 ? 1 : $j1);
-                    }
-                }
-                $selections = $Product->getTypeInstance(true)->getSelectionsByIds($selectionIds, $Product);
-                $isAvailable = true;
-                $maxQty = 100000;
-                $qty1 = $qty;
-                foreach ($selections->getItems() as $selection) {
-                    $Product = Mage::getModel('catalog/product')->load($selection->getProductId());
-                    if (isset($selectedQtys[$selection->getOptionId()][$selection->getSelectionId()])) {
-                        $qty = $selectedQtys[$selection->getOptionId()][$selection->getSelectionId()];
-                    } elseif (isset($selectedQtys[$selection->getOptionId()])) {
-                        $qty = $selectedQtys[$selection->getOptionId()];
-                    } else {
-                        $qty = $qty1;
-                    }
-
-                    if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                        $isAvailableArr = ITwebexperts_Payperrentals_Helper_Data::isAvailableWithQty($Product, $qty, $startingDate, $endingDate);
-                        $isAvailable = $isAvailable && $isAvailableArr['avail'];
-                        if ($maxQty > intval($isAvailableArr['maxqty'] / ($qty / $qty1))) {
-                            $maxQty = intval($isAvailableArr['maxqty'] / ($qty / $qty1));
-                        }
-                    }
-                }
-                $qty = $qty1;
-            }
-        } elseif ($this->getRequest()->getParam('bundle_option')) {
-            $selectionIds = $this->getRequest()->getParam('bundle_option');
-            $selectedQtys = $this->getRequest()->getParam('bundle_option_qty');
-            foreach ($selectedQtys as $i1 => $j1) {
-                if (is_array($j1)) {
-                    foreach ($j1 as $k1 => $p1) {
-                        $selectedQtys[$i1][$k1] = $qty * (($p1 == 0) ? 1 : $p1);
-                    }
-                } else {
-                    $selectedQtys[$i1] = $qty * (($j1 == 0) ? 1 : $j1);
-                }
-
-            }
-            $selections = $Product->getTypeInstance(true)->getSelectionsByIds($selectionIds, $Product);
-            $priceVal = 0;
-            $isAvailable = true;
-            $maxQty = 100000;
-            $qty1 = $qty;
-            if ($this->getRequest()->getParam('configurate-product-id')) {
-                $_parentProduct = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('configurate-product-id'));
-                if ($_parentProduct->getTypeId() == 'bundle') {
-                    $_bundleOverbooking = ITwebexperts_Payperrentals_Helper_Data::isAvailableWithQty($_parentProduct, $qty, $startingDate, $endingDate);
-                }
-            }
-            foreach ($selections->getItems() as $selection) {
-                $Product = Mage::getModel('catalog/product')->load($selection->getProductId());
-                if (isset($selectedQtys[$selection->getOptionId()][$selection->getSelectionId()])) {
-                    $qty = $selectedQtys[$selection->getOptionId()][$selection->getSelectionId()];
-                } elseif (isset($selectedQtys[$selection->getOptionId()])) {
-                    $qty = $selectedQtys[$selection->getOptionId()];
-                } else {
-                    $qty = $qty1;
-                }
-
-                if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                    $priceAmount = ITwebexperts_Payperrentals_Helper_Price::calculatePrice($Product, $startingDate, $endingDate, $qty, $customerGroup);
-                    if ($priceAmount == -1) {
-                        $priceVal = -1;
-                        break;
-                    }
-                    $priceVal = $priceVal + $qty * $priceAmount;
-                    if (!$_bundleOverbooking) {
-                        $isAvailableArr = ITwebexperts_Payperrentals_Helper_Data::isAvailableWithQty($Product, $qty, $startingDate, $endingDate);
-                    } else {
-                        $isAvailableArr = $_bundleOverbooking;
-                    }
-                    $isAvailable = $isAvailable && $isAvailableArr['avail'];
-                    //$maxQty = $isAvailableArr['maxqty'] / $qty1;
-                    if ($maxQty > intval($isAvailableArr['maxqty'] / ($qty / $qty1))) {
-                        $maxQty = intval($isAvailableArr['maxqty'] / $qty / $qty1);
-                    }
-                } else {
-                    $priceVal = $priceVal + $qty * $Product->getPrice();
-                }
-            }
-            $qty = $qty1;
-            $priceAmount = $priceVal;
-
-        }
-        if ((isset($priceAmount)) && $priceAmount != -1) {
-            if ($Product->getHasmultiply() == ITwebexperts_Payperrentals_Model_Product_Hasmultiply::STATUS_ENABLED && !is_null($qty)) {
-                $priceAmount += ITwebexperts_Payperrentals_Helper_Data::getOptionsPrice($Product, $priceAmount) * $qty;
-            } else {
-                $priceAmount += ITwebexperts_Payperrentals_Helper_Data::getOptionsPrice($Product, $priceAmount);
-            }
-
-            if ($this->getRequest()->getParam('saveDates') && Mage::getStoreConfig(ITwebexperts_Payperrentals_Helper_Data::XML_PATH_USE_GLOBAL_DAYS) == 1) {
-                Mage::getSingleton('core/session')->setData('startDateInitial', date('Y-m-d H:i:s', strtotime($startingDate)));
-                Mage::getSingleton('core/session')->setData('endDateInitial', date('Y-m-d H:i:s', strtotime($endingDate)));
-            }
-        }
-
-        $stockArr = array();
-        /*$Product = Mage::getModel('catalog/product')->load($this->getRequest()->getParam('product_id'));*/
-
-        if ($Product->getTypeId() != ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_BUNDLE) {
-            if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE ||
-                ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE_CONFIGURABLE
-                    && $Product->getIsReservation() != ITwebexperts_Payperrentals_Model_Product_Isreservation::STATUS_DISABLED)
-            ) {
-                $stockArr[$Product->getId()] = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($Product->getId(), $startingDate, $endingDate, $qty, $stockId);
-            } else {
-                $_product1 = Mage::getModel('catalog/product')->load($Product->getId());
-                $qtyStock = Mage::getModel('cataloginventory/stock_item')->loadByProduct($_product1)->getQty();
-                $stockArr[$Product->getId()]['avail'] = $qtyStock;
-                $stockArr[$Product->getId()]['remaining'] = $stockArr[$Product->getId()]['avail'] - $qty;
-            }
-
-
-        } elseif ($this->getRequest()->getParam('bundle_option')) {
-            $selectionIds = $this->getRequest()->getParam('bundle_option');
-            $selectedQtys = $this->getRequest()->getParam('bundle_option_qty');
-            foreach ($selectedQtys as $i1 => $j1) {
-                if (is_array($j1)) {
-                    foreach ($j1 as $k1 => $p1) {
-                        $selectedQtys[$i1][$k1] = $qty * ($p1 == 0 ? 1 : $p1);
-                    }
-                } else {
-                    $selectedQtys[$i1] = $qty * ($j1 == 0 ? 1 : $j1);
-                }
-            }
-            $selections = $Product->getTypeInstance(true)->getSelectionsByIds($selectionIds, $Product);
-
-            $qty1 = $qty;
-            foreach ($selections->getItems() as $selection) {
-                $Product = Mage::getModel('catalog/product')->load($selection->getProductId());
-                if (isset($selectedQtys[$selection->getOptionId()][$selection->getSelectionId()])) {
-                    $qty = $selectedQtys[$selection->getOptionId()][$selection->getSelectionId()];
-                } elseif (isset($selectedQtys[$selection->getOptionId()])) {
-                    $qty = $selectedQtys[$selection->getOptionId()];
-                } else {
-                    $qty = $qty1;
-                }
-
-
-                if ($Product->getTypeId() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE) {
-                    if (!isset($stockArr[$selection->getProductId()])) {
-                        $stockArr[$selection->getProductId()] = ITwebexperts_Payperrentals_Helper_Data::getStock($Product->getId(), $startingDate, $endingDate, $qty);
-                        //$stockArr[$selection->getProductId()]['remaining'] = $stockArr[$selection->getProductId()]['remaining'] - ($qty-1);
-                    } else {
-                        $stockArr[$selection->getProductId()]['remaining'] = $stockArr[$selection->getProductId()]['remaining'] - $qty;
-                    }
-
-                } else {
-                    if (!isset($stockArr[$selection->getProductId()])) {
-                        $_product1 = Mage::getModel('catalog/product')->load($selection->getProductId());
-                        $qtyStock = Mage::getModel('cataloginventory/stock_item')->loadByProduct($_product1)->getQty();
-                        $stockArr[$selection->getProductId()]['avail'] = $qtyStock;
-                        $stockArr[$selection->getProductId()]['remaining'] = $stockArr[$selection->getProductId()]['avail'] - $qty;
-                    } else {
-                        $stockArr[$selection->getProductId()]['remaining'] = $stockArr[$selection->getProductId()]['remaining'] - $qty;
-                    }
-                }
-            }
-        }
-
-        $isAvailable = true;
-        $maxQty = 100000;
-        $stockRest = 100000;
-        $stockAvailText = '';
-        $stockRestText = '';
-        foreach ($stockArr as $id => $avArr) {
-            if ($avArr['remaining'] < 0) {
-                if (!(ITwebexperts_Payperrentals_Helper_Data::isAllowedOverbook(Mage::getModel('catalog/product')->load($id)))) {
-                    if ($this->getRequest()->getParam('configurate-product-id') && !$_bundleOverbooking) {
-                        $isAvailable = false;
-                    }
-                }
-            }
-            if ($stockAvail > $avArr['avail']) {
-                //$maxQty = $avArr['avail'];
-                $stockAvail = $avArr['avail'];
-            }
-            if ($stockRest > $avArr['remaining']) {
-                $stockRest = $avArr['remaining'];
-                $pid = $id;
-            }
-            $curProd = Mage::getModel('catalog/product')->load($id);
-            $stockAvailText .= 'Stock available for product ' . $curProd->getName() . ': ' . $avArr['avail'] . '<br/>';
-            $stockRestText .= 'Stock remaining for product ' . $curProd->getName() . ': ' . $avArr['remaining'] . '<br/>';
-        }
-
-        if (isset($pid)) {
-            $maxQty = intval($stockArr[$pid]['avail'] / intval(($stockArr[$pid]['avail'] - $stockRest) / $qty1));
-        }
-        if (count($stockArr) > 1) {
-            $stockAvailText .= 'Stock available for bundle' . ': ' . $maxQty . '<br/>';
-            $stockRestText .= 'Stock remaining for bundle ' . ': ' . ($maxQty - $qty1) . '<br/>';
-        }
-        $price = array(
-            'amount' => isset($priceAmount) ? $priceAmount : -1,
-            'available' => $isAvailable,
-            'stockAvail' => $stockAvail,
-            'stockRest' => $stockRest,
-            'stockAvailText' => $stockAvailText,
-            'stockRestText' => $stockRestText,
-            'maxqty' => $maxQty,
-            'formatAmount' => isset($priceAmount) ? Mage::helper('core')->currency($priceAmount) : -1
-        );
-
-        $this->getResponse()->setBody(Zend_Json::encode($price));
-    }
-
     public function getSerialNumbersbyItemIdAction()
     {
         $query = $this->getRequest()->getParam('value');
@@ -402,166 +113,86 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
         $this->getResponse()->setBody(Zend_Json::encode($results));
     }
 
-    public function getEventsAction()
-    {
-        $_startDate = date('Y-m-d', urldecode($this->getRequest()->getParam('start'))) . ' 00:00:00';
-        $_endDate = date('Y-m-d', urldecode($this->getRequest()->getParam('end'))) . ' 23:59:59';
-        $_productIds = explode(',', urldecode($this->getRequest()->getParam('productsids')));
-        $_events = array();
-        $stockIds = Mage::helper('warehouse')->getStockIds();
-        /* @var $pprWarehouseHelper ITwebexperts_PPRWarehouse_Helper_Data */
-        $pprWarehouseHelper = Mage::helper('pprwarehouse');
-        foreach ($stockIds as $stockId) {
-        $_bookedByIds = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getBookedQtyForProducts($_productIds, $_startDate, $_endDate, false, true, $stockId);
-        $_productLoadAr = $_bookedByIds['products'];
-
-        foreach ($_bookedByIds['booked'] as $_dateFormatted => $_productAr) {
-            foreach ($_productAr as $_productId => $_paramAr) {
-                    $_product = $_productLoadAr[$_productId];
-                    $_maxQty = $pprWarehouseHelper->getQtyForProductAndStock($_product, $stockId);
-               // $_maxQty = $_product->getPayperrentalsQuantity();
-                /** Functional for showing all orders as different events*/
-                /*foreach($_paramAr['orders']['order_ids'] as $_incrementId){
-                    $_evb = array(
-                        'title' => 'Order #' . $_incrementId . '; Remaining Stock:' . ($_maxQty - $_paramAr['qty']),
-                        'url' => urlencode($_dateFormatted . '||' . $_incrementId . '||' . $_productId),
-                        'start' => $_paramAr['orders']['start_end'][$_incrementId]['period_start'],
-                        'end' => $_paramAr['orders']['start_end'][$_incrementId]['period_end'],
-                        'resource' => str_replace('.html', '', $_product->getUrlPath())
-                    );
-                    if ($_maxQty - $_paramAr['qty'] < 0) {
-                        $_evb['backgroundColor'] = '#cc0000';
-                        $_evb['className'] = 'overbookColor';
-                    }
-                    $_events[] = $_evb;
-                }*/
-
-
-                /** Functional for showing 1 event*/
-                $_evb = array(
-                    'title' => $_paramAr['qty'] . '/' . ($_maxQty - $_paramAr['qty']),
-                    'url' => urlencode($_dateFormatted . '||' . implode(';', $_paramAr['orders']['order_ids']) . '||' . $_productId . '||' . $stockId),
-                    'start' => date('Y-m-d', strtotime($_dateFormatted)) . ' 00:00:00',
-                    'end' => date('Y-m-d', strtotime($_dateFormatted)) . ' 23:59:59',
-                    'resource' => $_product->getId().'_'.$stockId
-                );
-                if ($_maxQty - $_paramAr['qty'] < 0) {
-                    $_evb['backgroundColor'] = '#cc0000';
-                    $_evb['className'] = 'overbookColor';
-                }
-                $_events[] = $_evb;
-
-            }
-        }
-        }
-
-        $this->getResponse()->setBody(Zend_Json::encode($_events));
-    }
-
-    public function getDateDetailsAction()
-    {
-        $_orderList = '<table cellpadding="10" cellspacing="10" border="0" style="min-width:350px;"><tr><td style="font-weight: bold">' . $this->__('Order ID') . '</td><td style="font-weight: bold">' . $this->__('Customer Name') . '</td><td style="font-weight: bold">' . $this->__('Start') . '</td><td style="font-weight: bold">' . $this->__('End') . '</td><td style="font-weight: bold">' . $this->__('Qty') . '</td><td style="font-weight: bold">' . $this->__('View Order') . '</td></tr>';
-        $_orderArr = explode('||', urldecode($this->getRequest()->getParam('start')));
-
-        $_orderIdsAr = explode(';', $_orderArr[1]);
-
-        $_orderCollections = Mage::getModel('payperrentals/reservationorders')->getCollection()
-            ->addProductIdFilter($_orderArr[2])
-            ->addFieldToFilter('stock_id', $_orderArr[3]);
-        $_orderCollections->addOrderIdsFilter($_orderIdsAr);
-        //$_orderCollections->groupByOrder();
-
-        foreach ($_orderCollections as $_orderItem) {
-            $_orderList .= '<tr>';
-            $_order = Mage::getModel('sales/order')->load($_orderItem->getOrderId());
-
-            $_shippingId = $_order->getShippingAddressId();
-            if (empty($shippingId)) {
-                $shippingId = $_order->getBillingAddressId();
-            }
-            $_address = Mage::getModel('sales/order_address')->load($_shippingId);
-            $_customerName = $_address->getFirstname() . ' ' . $_address->getLastname();
-            $_orderList .= '<td>';
-            $_orderList .= $_order->getIncrementId();
-            $_orderList .= '</td>';
-
-            $_orderList .= '<td>';
-            $_orderList .= $_customerName;
-            $_orderList .= '</td>';
-
-            $_orderList .= '<td>';
-            $_orderList .= ITwebexperts_Payperrentals_Helper_Data::formatDbDate($_orderItem->getStartDate());
-            $_orderList .= '</td>';
-            $_orderList .= '<td>';
-            $_orderList .= ITwebexperts_Payperrentals_Helper_Data::formatDbDate($_orderItem->getEndDate());
-            $_orderList .= '</td>';
-
-            $_orderList .= '<td>';
-            $_orderList .= $_orderItem->getQty();
-            $_orderList .= '</td>';
-
-            $_orderList .= '<td>';
-            $_orderList .= '<a href="' . Mage::getUrl('adminhtml/sales_order/view', array('order_id' => $_order->getEntityId())) . '">' . Mage::helper('payperrentals')->__('View') . '</a>';
-            $_orderList .= '</td>';
-            $_orderList .= '</tr>';
-        }
-        $_orderList .= '</table>';
-        $_details['html'] = $_orderList;
-        $_details['date'] = ITwebexperts_Payperrentals_Helper_Data::formatDbDate($_orderArr[0]);
-        $this->getResponse()->setBody(Zend_Json::encode($_details));
-    }
-
     public function getProductsPricesAction()
     {
         if (!$this->getRequest()->getParam('products')) {
             return;
         }
         if (!$this->getRequest()->getParam('stock_products')) {
-            $stockId = $this->getRequest()->getParam('stock_id');
-            if (!$stockId) {
+            $_stockId = $this->getRequest()->getParam('stock_id');
+            if (!$_stockId) {
                 $helper = Mage::helper('warehouse');
-                $stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
+                $_stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
             }
         }else{
-            $stockProducts = $this->getRequest()->getParam('stock_products');
+            $_stockProducts = $this->getRequest()->getParam('stock_products');
         }
 
         $output = array();
-        $productIds = $this->getRequest()->getParam('products');
+
+        $productIds = $this->getRequest()->getParam('products')?Zend_Json::decode($this->getRequest()->getParam('products')):array();
+        $dates = $this->getRequest()->getParam('dates')?Zend_Json::decode($this->getRequest()->getParam('dates')):array();
+        $startDate = Mage::getSingleton('core/session')->getData('startDateInitial')?Mage::getSingleton('core/session')->getData('startDateInitial'):date('Y-m-d H:i:s');
+        $endDate = Mage::getSingleton('core/session')->getData('endDateInitial')?Mage::getSingleton('core/session')->getData('endDateInitial'):date('Y-m-d H:i:s');
+        $qtys = $this->getRequest()->getParam('qtys')?Zend_Json::decode($this->getRequest()->getParam('qtys')):array();
+
         $productCollection = Mage::getModel('catalog/product')
             ->getCollection()
             ->addFieldToFilter('entity_id', array('in' => $productIds));
-        if(Mage::getSingleton('core/session')->getData('startDateInitial')){
-            $startDate = Mage::getSingleton('core/session')->getData('startDateInitial');
-        }else{
-            $startDate = date('Y-m-d H:i:s');
-        }
-        if(Mage::getSingleton('core/session')->getData('endDateInitial')){
-            $endDate = Mage::getSingleton('core/session')->getData('endDateInitial');
-        }else{
-            $endDate = date('Y-m-d H:i:s');
-        }
-        $qtys = array();
-        if ($this->getRequest()->getParam('qtys')) {
-            $qtys = $this->getRequest()->getParam('qtys');
-        }
-        $dates = array();
-        if ($this->getRequest()->getParam('dates')) {
-            $dates = $this->getRequest()->getParam('dates');
-        }
+
+        /** @var $product Mage_Catalog_Model_Product */
         foreach ($productCollection AS $product) {
-            if(isset($dates[$product->getId()])){
+            if (isset($dates[$product->getId()])) {
                 $arrDates = explode(',', $dates[$product->getId()]);
                 $startDate = $arrDates[0];
                 $endDate = $arrDates[1];
             }
-            $output[$product->getId()] = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product->getId(), $startDate, $endDate, (isset($qtys[$product->getId()])?$qtys[$product->getId()]:1), isset($stockProducts[$product->getId()])?$stockProducts[$product->getId()]:$stockId);
-            $output[$product->getId()]['avail'] += (isset($qtys[$product->getId()])?$qtys[$product->getId()]:1);
-            $output[$product->getId()]['remaining'] += (isset($qtys[$product->getId()])?$qtys[$product->getId()]:1);
+
+            /*Varien_Profiler::start('child_stock_logic');*/
+            $_childFlag = false;
+            if ($this->getRequest()->getParam('childItems')) {
+                $_childItemsAr = Zend_Json::decode($this->getRequest()->getParam('childItems'));
+                if (array_key_exists($product->getId(), $_childItemsAr)) {
+                    $_childItemIds = explode(',', $_childItemsAr[$product->getId()]);
+                    $_outputAvailAr = array();
+                    $_outputRemainingAr = array();
+                    $_childProductCollection = Mage::getResourceModel('catalog/product_collection')
+                        ->addFieldToFilter('entity_id', array('in' => $_childItemIds));
+                    /** @var $_childProduct Mage_Catalog_Model_Product */
+                    foreach ($_childProductCollection as $_childProduct) {
+                        $_childFlag = true;
+                        Mage::register('stock_id', isset($_stockProducts[$_childProduct->getId()])?$_stockProducts[$_childProduct->getId()]:$_stockId);
+                        $_stockAvail = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($_childProduct->getId(), $startDate, $endDate);
+                        $_childDescription = '';
+                        if ($_childProductCollection->getSize() > 1) {
+                            $_childDescription = '<strong>' . $_childProduct->getSku() . ':</strong> ';
+                        }
+                        $_qty = (isset($qtys[$product->getId()]) ? $qtys[$product->getId()] : 1);
+                        $_outputAvailAr[] = $_childDescription . $_stockAvail;
+                        $_outputRemainingAr[] = $_childDescription . ($_stockAvail - $_qty);
+                    }
+
+                    if ($_childFlag) {
+                        $output[$product->getId()] = array(
+                            'avail' => implode('<br/>', $_outputAvailAr),
+                            'remaining' => implode('<br/>', $_outputRemainingAr)
+                        );
+                    }
+                }
+            }
+            if (!$_childFlag) {
+                $_qty = (isset($qtys[$product->getId()]) ? $qtys[$product->getId()] : 1);
+                Mage::register('stock_id', isset($_stockProducts[$product->getId()])?$_stockProducts[$product->getId()]:$_stockId);
+                $_stockAvail = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($product->getId(), $startDate, $endDate);
+                $output[$product->getId()] = array(
+                    'avail' => $_stockAvail,
+                    'remaining' => ($_stockAvail - $_qty)
+                );
+            }
+            /*Varien_Profiler::stop('child_stock_logic');*/
+
         }
-        $this
-            ->getResponse()
-            ->setBody(Zend_Json::encode($output));
+        $this->getResponse()->setBody(Zend_Json::encode($output));
     }
 
 

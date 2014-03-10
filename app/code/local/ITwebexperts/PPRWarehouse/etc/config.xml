@@ -61,7 +61,6 @@
             <payperrentals>
                 <rewrite>
                     <data>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data</data>
-                    <rendercart>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Rendercart</rendercart>
                     <inventory>ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory</inventory>
                 </rewrite>
             </payperrentals>
@@ -93,6 +92,15 @@
                     </pprwarehouse_getquantity>
                 </observers>
             </after_getquantity>
+            <ppr_set_stock>
+                <observers>
+                    <pprwarehouse_pprsetstock>
+                        <type>singleton</type>
+                        <class>pprwarehouse/observer</class>
+                        <method>setStock</method>
+                    </pprwarehouse_pprsetstock>
+                </observers>
+            </ppr_set_stock>
         </events>
     </global>
     <frontend>
