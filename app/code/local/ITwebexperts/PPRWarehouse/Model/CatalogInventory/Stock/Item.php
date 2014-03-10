@@ -34,7 +34,7 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
 			$stockId = $this->getStockId(); // $quoteItem->getStockId();
 
             if($startDate && $endDate){
-                $newStock = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data::getStock($product, $startDate, $endDate, 0, $stockId);
+                $newStock = ITwebexperts_Payperrentals_Helper_Data::getStock($product, $startDate, $endDate, 0, $stockId);
 			    $newQty = isset($newStock['avail']) ? $newStock['avail'] : 0;
             }else{
                 $newQty = 10000000;

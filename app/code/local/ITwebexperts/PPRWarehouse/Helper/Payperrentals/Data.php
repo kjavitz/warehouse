@@ -23,9 +23,6 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
             $_stockArr[] = Mage::app()->getRequest()->getParam('stock_id');
         } elseif (Mage::registry('stock_id')) {
             $_stockArr[] = Mage::registry('stock_id');
-        } else {
-            $helper = Mage::helper('pprwarehouse');
-            $_stockArr = $helper->getValidStockIds();
         }
         $_booked = array();
         $_isQuote = Mage::getSingleton("checkout/session")->getQuote()->getId();
@@ -36,7 +33,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Data extends ITwebexperts_P
         if (!is_array($_productIds)) {
             $_productIds = array($_productIds);
         }
-
+//it will be per stock, booked['13-05-2014']
         $_productLoadAr = array();
         foreach ($_productIds as $_iProduct) {
             if (!$_isReport && ITwebexperts_Payperrentals_Helper_Inventory::isAllowedOverbook($_iProduct)) {

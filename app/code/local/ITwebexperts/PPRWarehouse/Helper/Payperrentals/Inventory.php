@@ -11,6 +11,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory extends ITwebexpe
      */
     public function isAvailable($_productId, $_start_date, $_end_date, $_qty = 1, $_quoteItem = false)
     {
+        return true;
         if($_quoteItem){
             $_coll5 = Mage::getModel('payperrentals/reservationquotes')
                 ->getCollection()

@@ -25,7 +25,7 @@ app/code/local/ITwebexperts/PPRWarehouse/Model/Payperrentals/Product/Backend/Ser
 app/code/local/ITwebexperts/PPRWarehouse/Model/Payperrentals/Product/Type/Configurable.php 
 app/code/local/ITwebexperts/PPRWarehouse/Model/Payperrentals/Product/Type/Grouped.php 
 app/code/local/ITwebexperts/PPRWarehouse/Model/Payperrentals/Product/Type/Reservation.php 
-app/code/local/ITwebexperts/PPRWarehouse/Model/Sales/Quote/Item.php 
+app/code/local/ITwebexperts/PPRWarehouse/Model/Sales/Quote/Item.php
 app/code/local/ITwebexperts/PPRWarehouse/sql/pprwarehouse_setup/install-0.1.0.php 
 app/design/adminhtml/default/default/layout/pprwarehouse.xml 
 app/design/adminhtml/default/default/template/pprwarehouse/qreport.phtml 
