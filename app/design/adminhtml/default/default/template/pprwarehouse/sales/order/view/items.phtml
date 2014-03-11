@@ -1,13 +1,33 @@
-<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_View_Items */ ?>
-<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_View_Items */ ?>
-<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_Invoice_Create_Items */ ?>
-<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_Invoice_Create_Items */ ?>
-<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_Shipment_Create_Items */ ?>
-<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_Shipment_Create_Items */ ?>
-<?php /* @var $this Innoexts_Warehouse_Block_Adminhtml_Sales_Order_Creditmemo_Create_Items */ ?>
-<?php /* @var $this Mage_Adminhtml_Block_Sales_Order_Creditmemo_Create_Items */ ?>
-<?php if(Mage::app()->getRequest()->getParam('noHeader')): 	?>
-	<style type="text/css">
+<?php
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *
+ * @category    design
+ * @package     default_default
+ * @copyright   Copyright (c) 2012 Magento Inc. (http://www.magentocommerce.com)
+ * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ */
+?>
+<?php
+if (Mage::app()->getRequest()->getParam('noHeader')) {
+    ?>
+    <style type="text/css">
 		.header{
 			display:none !important;
 		}
@@ -16,7 +36,7 @@
 		}
 
 	</style>
-<?php endif ?>
+<?php } ?>
 
 <!-- Warehouse -->
 <?php $helper = Mage::helper('warehouse') ?>
@@ -24,7 +44,7 @@
 
 <?php $_order = $this->getOrder() ?>
 <div class="grid np">
-	<?php ITwebexperts_Payperrentals_Helper_Data::showSingleDates($this->getOrder());?>
+    <?php echo ITwebexperts_Payperrentals_Helper_Data::showSingleDates($this->getOrder()); ?>
 	<div class="hor-scroll">
 		<table cellspacing="0" class="data order-tables">
 			<col />
@@ -42,79 +62,87 @@
 			<col width="1" />
 			<thead>
 			<tr class="headings">
-				<th><?php echo $this->helper('sales')->__('Product') ?></th>
+                <th><?php echo $this->helper('payperrentals')->__('Product') ?></th>
 				<th><?php echo $helper->__('Warehouse') ?></th>
-				<th><span class="nobr"><?php echo $this->helper('sales')->__('Item Status') ?></span></th>
-				<th><span class="nobr"><?php echo $this->helper('sales')->__('Original Price') ?></span></th>
-				<th><?php echo $this->helper('sales')->__('Price') ?></th>
-				<th class="a-center"><?php echo $this->helper('sales')->__('Qty') ?></th>
-				<th class="a-center"><?php echo $this->helper('sales')->__('Current Stock') ?></th>
-				<th class="a-center"><?php echo $this->helper('sales')->__('Remaining Stock') ?></th>
-				<th><?php echo $this->helper('sales')->__('Subtotal') ?></th>
-				<th><span class="nobr"><?php echo $this->helper('sales')->__('Tax Amount') ?></span></th>
-				<th><span class="nobr"><?php echo $this->helper('sales')->__('Tax Percent') ?></span></th>
-				<th><span class="nobr"><?php echo $this->helper('sales')->__('Discount Amount') ?></span></th>
-				<th class="last"><span class="nobr"><?php echo $this->helper('sales')->__('Row Total') ?></span></th>
+                <th><span class="nobr"><?php echo $this->helper('payperrentals')->__('Item Status') ?></span></th>
+                <th><span class="nobr"><?php echo $this->helper('payperrentals')->__('Original Price') ?></span></th>
+                <th><?php echo $this->helper('payperrentals')->__('Price') ?></th>
+                <th class="a-center"><?php echo $this->helper('payperrentals')->__('Qty') ?></th>
+                <th class="a-center"><?php echo $this->helper('payperrentals')->__('Total Stock') ?></th>
+                <th class="a-center"><?php echo $this->helper('payperrentals')->__('Remaining Stock') ?></th>
+                <th><?php echo $this->helper('payperrentals')->__('Subtotal') ?></th>
+                <th><span class="nobr"><?php echo $this->helper('payperrentals')->__('Tax Amount') ?></span></th>
+                <th><span class="nobr"><?php echo $this->helper('payperrentals')->__('Tax Percent') ?></span></th>
+                <th><span class="nobr"><?php echo $this->helper('payperrentals')->__('Discount Amount') ?></span></th>
+                <th class="last"><span class="nobr"><?php echo $this->helper('payperrentals')->__('Row Total') ?></span></th>
 			</tr>
 			</thead>
-			<?php $_items = $this->getItemsCollection() ?>
-			<?php $i=0;foreach ($_items as $_item):?>
-				<?php if ($_item->getParentItem()) continue; else $i++;?>
-				<tbody class="<?php echo $i%2?'even':'odd' ?>">
-				<?php echo $this->getItemHtml($_item) ?>
-				<?php echo $this->getItemExtraInfoHtml($_item) ?>
-				</tbody>
-			<?php endforeach; ?>
+            <?php $_items = $this->getItemsCollection() ?>
+            <?php $i = 0;
+            foreach ($_items as $_item): ?>
+                <?php if ($_item->getParentItem()) continue; else $i++; ?>
+                <tbody class="<?php echo $i % 2 ? 'even' : 'odd' ?>">
+                <?php echo $this->getItemHtml($_item) ?>
+                <?php echo $this->getItemExtraInfoHtml($_item) ?>
+                </tbody>
+            <?php endforeach; ?>
 		</table>
 	</div>
 </div>
 <br />
 <script type="text/javascript">
-    function getItemsGridData()
-    {
-        var productIds = new Array();
-        var stockIds = new Array();
-        var productIdsFields = $jppr('input[name="stock_product_id"]');
-        var qtyIds = new Array();
-        var datesIds = new Array();
-        productIdsFields.each(function(index, element) {
-            productIds.push(element.value);
-            stockIds[element.value] = $jppr(element).attr('stock_id');
-            qtyIds[element.value] = $jppr(element).attr('qty');
-            datesIds[element.value] = $jppr(element).attr('dates');
+    function getItemsGridData() {
+        var params = {};
+        <?php /** Use objects for qty and dates, because it send empty elements. For example if product id = 63 it send 62 empty elements and 1 with data */ ?>
+        var productIds = {};
+        var qtyIds = {};
+		var stockIds = {};
+        var datesIds = {};
+        var childIds = {};
+        var productIdsFields = $$('input[class="stock_product_id"]');
+        productIdsFields.each(function (element, index) {
+            if(element.value != ''){
+                productIds[index] = element.value;
+                if ($(element).hasAttribute('qty') && $(element).getAttribute('qty') != '') {
+                    qtyIds[element.value] = $(element).getAttribute('qty');
+                }
+                if ($(element).hasAttribute('dates') && $(element).getAttribute('dates') != '') {
+                    datesIds[element.value] = $(element).getAttribute('dates');
+                }
+				if ($(element).hasAttribute('stock_id') && $(element).getAttribute('stock_id') != '') {
+                    stockIds[element.value] = $(element).getAttribute('stock_id');
+                }
+
+                if ($(element).hasAttribute('childItems') && $(element).getAttribute('childItems') != '') {
+                    childIds[element.value] = $(element).getAttribute('childItems');
+                }
+            }
         });
-        var pprSearchAjax = $jppr.ajax({
-            cache: false,
-            dataType: 'json',
-            type: 'post',
-            url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getProductsPrices/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>',
-            data: {
-                'products': productIds,
-                'qtys': qtyIds,
-                'dates': datesIds,
-                'stock_products':stockIds
+
+        new Ajax.Request('<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getProductsPrices/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>', {
+            method: 'post',
+            parameters: {
+                products: Object.toJSON(productIds),
+                qtys: Object.toJSON(qtyIds),
+                dates: Object.toJSON(datesIds),
+                stock_products: Object.toJSON(stockIds),
+                childItems: Object.toJSON(childIds)
             },
-            success: function (data) {
-                var productIdsFields = $jppr('input[name="stock_product_id"]');
-                productIdsFields.each(function(index, element) {
+            onSuccess: function (response) {
+                var data = response.responseText.evalJSON();
+                var productIdsFields = $$('input[class="stock_product_id"]');
+                productIdsFields.each(function (element, index) {
                     var productId = element.value;
                     if (data[productId] != undefined) {
-                        $jppr(element).parent('td').parent('tr').find('.currentstock').html(data[productId]['avail']);
-                        $jppr(element).parent('td').parent('tr').find('.remainingstock').html(data[productId]['remaining']);
+                        $(element).up('tr').down('.currentstock').update(data[productId]['avail']);
+                        $(element).up('tr').down('.remainingstock').update(data[productId]['remaining']);
                     }
                 });
-                /*var productIdsTDs = $_jppr('#sales_order_create_search_grid_table tbody tr td:first-child');
-                 productIdsTDs.each(function(index, element) {
-                 var productId = $_jppr.trim(element.innerHTML);
-                 if (data[productId] != undefined) {
-                 $_jppr(element).parent('tr').find('.currentstock').html(data[productId]['avail']);
-                 }
-                 });*/
             }
         });
 
     }
-    Event.observe(window, 'load',  function(){
+    Event.observe(window, 'load', function () {
         getItemsGridData();
     });
 </script>

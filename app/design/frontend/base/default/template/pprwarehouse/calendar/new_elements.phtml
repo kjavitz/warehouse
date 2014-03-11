@@ -1,0 +1,43 @@
+<?php
+
+$_jsContainerPrefix = $this->getData('jsContainerPrefix');
+$_jsFunctionPrefix = $this->getData('jsFunctionPrefix');
+$isAdminGlobal = $this->getData('isAdminGlobal');
+$isAdmin = $this->getData('isAdmin');
+$quoteItemId = $this->getData('quoteItemId');
+$quoteItem = $this->getData('quoteItem');
+$helper = Mage::helper('warehouse');
+$config = $helper->getConfig();
+?>
+<?php if($isAdmin): ?>
+<div id="product-item-warehouse<?php echo $quoteItemId;?>" class="product-item-warehouse">
+    <?php /** @var $helper ITwebexperts_PPRWarehouse_Helper_Data */ ?>
+<?php $helper = Mage::helper('pprwarehouse'); ?>
+<?php $quote = isset($quoteItem) && $quoteItem->getId() ? $quoteItem->getQuote() : Mage::getSingleton('adminhtml/session_quote')->getQuote() ?>
+<?php $validStockIds = $helper->getValidStockIds($quote) ?>
+<?php /** @var $warehouseHelper Innoexts_Warehouse_Helper_Data */ ?>
+<?php $warehouseHelper = Mage::helper('warehouse') ?>
+<?php $currentStockId = isset($quoteItem) ? $quoteItem->getStockId() : null ?>
+<select name="stock_id">
+    <?php foreach($validStockIds as $stockId): ?>
+        <?php $warehouse = $warehouseHelper->getWarehouseTitleByStockId($stockId) ?>
+        <option value="<?php echo $stockId ?>" <?php if($currentStockId == $stockId): ?>selected="selected" <?php endif ?>><?php echo $this->escapeHtml($warehouse) ?></option>
+    <?php endforeach ?>
+</select>
+</div>
+<?php endif; ?>
+<?php if($isAdminGlobal): ?>
+    <!-- Warehouse -->
+    <?php if (!$config->isMultipleMode()) : ?>
+        <?php $stockId = $this->getCreateOrderModel()->getStockId(); ?>
+        <p class="switcher">
+            <label for="stock_switcher"><?php echo $helper->__('Warehouse:') ?></label>
+            <select id="stock_switcher" name="order[stock_id]" onchange="order.setStockId(this.value);">
+                <?php foreach ($helper->getWarehouses() as $warehouse): ?>
+                    <option value="<?php echo $warehouse->getStockId() ?>"<?php if ($warehouse->getStockId() == $stockId) : ?> selected="selected"<?php endif; ?>><?php echo $warehouse->getTitle() ?></option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+    <?php endif; ?>
+    <!-- End Warehouse -->
+<?php endif; ?>

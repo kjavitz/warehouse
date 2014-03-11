@@ -285,7 +285,7 @@
     </td>
     <td>
         <span class="currentstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span>
-        <input type="hidden" dates="<?php echo $start_date; ?>,<?php echo $end_date;?>" qty="<?php echo $_item->getQtyOrdered();?>" stock_id="<?php echo $_item->getStockId() ?>" name="stock_product_id" value="<?php echo $_item->getProduct()->getId() ?>" />
+        <input type="hidden" class="stock_product_id" dates="<?php echo isset($start_date)?$start_date:''; ?>,<?php echo isset($end_date)?$end_date:'';?>" stock_id="<?php echo $_item->getStockId() ?>" qty="<?php echo $_item->getQtyOrdered();?>" value="<?php echo $_item->getProduct()->getId() ?>"<?php if(isset($_childReservation) && count($_childReservation)): ?> childItems="<?php echo implode(',', $_childReservation) ?>"<?php endif ?>/>
     </td>
     <td><span class="remainingstock"><img src="<?php echo $this->getSkinUrl('images/ajax-loader.gif') ?>" /></span></td>
     <td class="a-right">

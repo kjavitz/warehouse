@@ -20,6 +20,7 @@
 <script type="text/javascript" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS) .'itwebexperts_payperrentals/autocomplete/jquery-autocomplete.js'; ?>"></script>
 
 <div class="grid np">
+    <?php echo ITwebexperts_Payperrentals_Helper_Data::showSingleDates($this->getOrder());?>
 	<div class="hor-scroll">
 		<table cellspacing="0" class="data order-tables">
 			<col />
@@ -33,22 +34,24 @@
 			<?php endif; ?>
 			<thead>
 			<tr class="headings">
-				<th><?php echo $this->helper('sales')->__('Product') ?></th>
+                <th><?php echo $this->helper('payperrentals')->__('Product') ?></th>
 
 				<!-- Warehouse -->
 				<th><?php echo $helper->__('Warehouse') ?></th>
 				<!-- End Warehouse -->
 
-				<th class="a-center"><?php echo $this->helper('sales')->__('Qty') ?></th>
-				<th<?php if ($this->isShipmentRegular()): ?> class="last"<?php endif; ?>><span class="nobr"><?php echo $this->helper('sales')->__('Qty to Ship') ?></span></th>
+                <th class="a-center"><?php echo $this->helper('payperrentals')->__('Qty') ?></th>
+                <th<?php if ($this->isShipmentRegular()): ?> class="last"<?php endif; ?>><span class="nobr"><?php echo $this->helper('payperrentals')->__('Qty to Ship') ?></span></th>
 				<?php if (!$this->canShipPartiallyItem()): ?>
-					<th class="a-center last"><span class="nobr"><?php echo $this->helper('sales')->__('Ship') ?></span></th>
+                    <th class="a-center last"><span class="nobr"><?php echo $this->helper('payperrentals')->__('Ship') ?></span></th>
 				<?php endif; ?>
 			</tr>
 			</thead>
 			<?php $_items = $this->getShipment()->getAllItems() ?>
-			<?php $_i=0;foreach ($_items as $_item): if ($_item->getOrderItem()->getIsVirtual() || $_item->getOrderItem()->getParentItem()): continue; endif; $_i++ ?>
-				<tbody class="<?php echo $_i%2?'odd':'even' ?>">
+            <?php $_i = 0;
+            foreach ($_items as $_item): if ($_item->getOrderItem()->getIsVirtual() || $_item->getOrderItem()->getParentItem()): continue; endif;
+                $_i++ ?>
+                <tbody class="<?php echo $_i % 2 ? 'odd' : 'even' ?>">
 				<?php echo $this->getItemHtml($_item) ?>
 				<?php echo $this->getItemExtraInfoHtml($_item->getOrderItem()) ?>
 				</tbody>
@@ -62,7 +65,7 @@
 	<fieldset>
 		<div id="order-history_form">
             <span class="field-row">
-                <label class="normal" for="shipment_comment_text"><?php echo Mage::helper('sales')->__('Shipment Comments') ?></label>
+                <label class="normal" for="shipment_comment_text"><?php echo Mage::helper('payperrentals')->__('Shipment Comments') ?></label>
                 <textarea id="shipment_comment_text" name="shipment[comment_text]" rows="3" cols="5" style="height:6em; width:99%;"><?php echo $this->getShipment()->getCommentText(); ?></textarea>
             </span>
 			<div class="clear"></div>
@@ -75,17 +78,17 @@
 		<div class="order-totals-bottom">
 			<?php if ($this->canCreateShippingLabel()): ?>
 				<p>
-					<label class="normal" for="create_shipping_label"><?php echo Mage::helper('sales')->__('Create Shipping Label') ?></label>
+                    <label class="normal" for="create_shipping_label"><?php echo Mage::helper('payperrentals')->__('Create Shipping Label') ?></label>
 					<input id="create_shipping_label" name="shipment[create_shipping_label]" value="1" type="checkbox"  onclick="toggleCreateLabelCheckbox();" />
 				</p>
 			<?php endif ?>
 			<p>
-				<label class="normal" for="notify_customer"><?php echo Mage::helper('sales')->__('Append Comments') ?></label>
+                <label class="normal" for="notify_customer"><?php echo Mage::helper('payperrentals')->__('Append Comments') ?></label>
 				<input id="notify_customer" name="shipment[comment_customer_notify]" value="1" type="checkbox" />
 			</p>
 			<?php if ($this->canSendShipmentEmail()): ?>
 				<p>
-					<label class="normal" for="send_email"><?php echo Mage::helper('sales')->__('Email Copy of Shipment') ?></label>
+                    <label class="normal" for="send_email"><?php echo Mage::helper('payperrentals')->__('Email Copy of Shipment') ?></label>
 					<input id="send_email" name="shipment[send_email]" value="1" type="checkbox" />
 				</p>
 			<?php endif; ?>
@@ -105,8 +108,7 @@
 		Event.observe(sendEmailCheckbox, 'change', bindSendEmail);
 		bindSendEmail();
 	}
-	function bindSendEmail()
-	{
+    function bindSendEmail() {
 		if (sendEmailCheckbox.checked == true) {
 			notifyCustomerCheckbox.disabled = false;
 			//shipmentCommentText.disabled = false;
@@ -135,8 +137,6 @@
 	}
 
 	//]]>
-</script>
-<script>
 	$jppr = jQuery.noConflict();
 	$jppr(document).ready(function(){
 		var nameArr = [];
@@ -156,7 +156,7 @@
 		$jppr('.sn').each(function(){
 			$jppr(this).autocomplete({
 				ajax:{
-					url:'<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getSerialNumbersbyItemId/",array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>'
+                    url: '<?php echo Mage::getUrl("payperrentals_admin/adminhtml_ajax/getSerialNumbersbyItemId/", array('form_key'=> Mage::getSingleton('core/session')->getFormKey()))?>'
 				},
 				cb:{
 					populate:function(){

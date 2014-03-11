@@ -34,6 +34,20 @@
                     <!--<quote>ITwebexperts_PPRWarehouse_Model_Sales_Quote</quote>-->
                 </rewrite>
             </sales>
+            <cataloginventory_mysql4>
+                <rewrite>
+                    <stock_item>ITwebexperts_PPRWarehouse_Model_Mysql4_Cataloginventory_Stock_Item</stock_item>
+                    <!--<stock_status>Innoexts_Warehouse_Model_Mysql4_Cataloginventory_Stock_Status</stock_status>-->
+                </rewrite>
+            </cataloginventory_mysql4>
+           <!-- <cataloginventory_resource>
+                <rewrite>
+                    <stock_item>Mage_CatalogInventory_Model_Resource_Stock_Item</stock_item>
+                </rewrite>
+            </cataloginventory_resource>
+            loadByProductId we could do this and have a default magento model to be loaded.
+            Only problem is how to get the needed start_end_dates
+            -->
         </models>
         <blocks>
             <pprwarehouse>
@@ -101,6 +115,55 @@
                     </pprwarehouse_pprsetstock>
                 </observers>
             </ppr_set_stock>
+            <ppr_before_filter_order>
+                <observers>
+                    <pprwarehouse_pprfilter>
+                        <type>singleton</type>
+                        <class>pprwarehouse/observer</class>
+                        <method>beforeFilterOrder</method>
+                    </pprwarehouse_pprfilter>
+                </observers>
+            </ppr_before_filter_order>
+            <calendar_newelements>
+                <observers>
+                    <itwebexperts_events1>
+                        <class>pprwarehouse/observer</class>
+                        <method>calendarNewElements</method>
+                    </itwebexperts_events1>
+                </observers>
+            </calendar_newelements>
+            <options_gridnames>
+                <observers>
+                    <pprwarehouse_8>
+                        <class>pprwarehouse/observer</class>
+                        <method>optionsGridNames</method>
+                    </pprwarehouse_8>
+                </observers>
+            </options_gridnames>
+            <options_grid>
+                <observers>
+                    <pprwarehouse_9>
+                        <class>pprwarehouse/observer</class>
+                        <method>optionsGrid</method>
+                    </pprwarehouse_9>
+                </observers>
+            </options_grid>
+            <options_gridcols>
+                <observers>
+                    <pprwarehouse_10>
+                        <class>pprwarehouse/observer</class>
+                        <method>optionsGridCols</method>
+                    </pprwarehouse_10>
+                </observers>
+            </options_gridcols>
+            <options_gridbuttons>
+                <observers>
+                    <pprwarehouse_11>
+                        <class>pprwarehouse/observer</class>
+                        <method>optionsGridButtons</method>
+                    </pprwarehouse_11>
+                </observers>
+            </options_gridbuttons>
         </events>
     </global>
     <frontend>

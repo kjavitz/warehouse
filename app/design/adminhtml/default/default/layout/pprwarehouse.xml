@@ -90,87 +90,107 @@
     </payperrentals_adminhtml_quantityreport_index>
 
 
-    <adminhtml_sales_order_create_index>
-        <reference name="data">
-            <action method="setTemplate">
-                <template>pprwarehouse/sales/order/create/data.phtml</template>
-            </action>
-        </reference>
-        <reference name="items_grid">
-            <action method="setTemplate">
-                <template>pprwarehouse/sales/order/create/items/grid.phtml</template>
-            </action>
-        </reference>
-    </adminhtml_sales_order_create_index>
-        <!--Load Blocks-->
-    <adminhtml_sales_order_create_load_block_data>
-        <reference name="items_grid">
-            <action method="setTemplate">
-                <template>pprwarehouse/sales/order/create/items/grid.phtml</template>
-            </action>
-        </reference>
-
-        <!--Block not available in system-->
-        <!--<reference name="search">
-            <action method="unsetChild">
-                <name>grid</name>
-            </action>
-            <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
-        </reference>-->
-        <reference name="data">
-            <action method="setTemplate">
-                <template>pprwarehouse/sales/order/create/data.phtml</template>
-            </action>
-        </reference>
-    </adminhtml_sales_order_create_load_block_data>
     <adminhtml_sales_order_create_load_block_search>
-        <!--Block not available in system-->
-        <!--<reference name="search">
+
+        <reference name="search">
             <action method="unsetChild">
                 <name>grid</name>
             </action>
-            <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
-        </reference>-->
+            <block type="payperrentals/adminhtml_sales_order_create_search_grid" name="grid"/>
+        </reference>
     </adminhtml_sales_order_create_load_block_search>
     <adminhtml_sales_order_create_load_block_search_grid>
-        <!--Block not available in system-->
-        <!--<reference name="content">
+
+        <reference name="content">
             <action method="unsetChild">
                 <name>grid</name>
             </action>
-            <block type="pprwarehouse/adminhtml_sales_order_create_search_grid" name="grid" />
-        </reference>-->
+            <block type="payperrentals/adminhtml_sales_order_create_search_grid" name="grid"/>
+        </reference>
     </adminhtml_sales_order_create_load_block_search_grid>
 
     <adminhtml_sales_order_create_load_block_items>
         <reference name="items_grid">
             <action method="setTemplate">
-                <template>pprwarehouse/sales/order/create/items/grid.phtml</template>
+                <template>payperrentals/sales/order/create/items/grid.phtml</template>
+                <type>payperrentals/sales_order_create_create_items_grid</type>
+            </action>
+        </reference>
+        <reference name="items">
+            <action method="setTemplate">
+                <template>payperrentals/sales/order/create/items.phtml</template>
             </action>
         </reference>
     </adminhtml_sales_order_create_load_block_items>
 
+    <adminhtml_sales_order_create_load_block_data>
+        <reference name="items_grid">
+            <action method="setTemplate">
+                <template>payperrentals/sales/order/create/items/grid.phtml</template>
+                <type>payperrentals/sales_order_create_create_items_grid</type>
+            </action>
+        </reference>
 
-    <PRODUCT_TYPE_reservation>
-        <reference name="product.composite.fieldset.reservation">
+        <reference name="search">
+            <action method="unsetChild">
+                <name>grid</name>
+            </action>
+            <block type="payperrentals/adminhtml_sales_order_create_search_grid" name="grid"/>
+        </reference>
+        <reference name="data">
             <action method="setTemplate">
-                <template>pprwarehouse/product/composite/fieldset/options/reservation.phtml</template>
+                <template>payperrentals/sales/order/create/data.phtml</template>
+                <!--<type>payperrentals/sales_order_create_create_items_grid</type>-->
             </action>
         </reference>
-    </PRODUCT_TYPE_reservation>
-    <PRODUCT_TYPE_configurable>
-        <reference name="product.composite.fieldset.reservation">
+        <reference name="items">
             <action method="setTemplate">
-                <template>pprwarehouse/product/composite/fieldset/options/reservation.phtml</template>
+                <template>payperrentals/sales/order/create/items.phtml</template>
             </action>
         </reference>
-    </PRODUCT_TYPE_configurable>
-    <PRODUCT_TYPE_bundle>
-        <reference name="product.composite.fieldset.reservation">
-            <action method="setTemplate">
-                <template>pprwarehouse/product/composite/fieldset/options/reservation.phtml</template>
+    </adminhtml_sales_order_create_load_block_data>
+    <adminhtml_sales_order_create_index>
+        <reference name="head">
+            <action method="addCss">
+                <stylesheet>itwebexperts_payperrentals/common_style.css</stylesheet>
+            </action>
+            <action method="addJs">
+                <script>itwebexperts_payperrentals/jqueryui/js/jquery-1.8.3.js</script>
+            </action>
+            <action method="addJs">
+                <script>itwebexperts_payperrentals/jquery/jquery.noconflict.js</script>
             </action>
         </reference>
-    </PRODUCT_TYPE_bundle>
+        <reference name="items_grid">
+            <action method="setTemplate">
+                <template>payperrentals/sales/order/create/items/grid.phtml</template>
+                <type>payperrentals/sales_order_create_create_items_grid</type>
+            </action>
+        </reference>
 
+        <reference name="search">
+            <action method="unsetChild">
+                <name>grid</name>
+            </action>
+            <block type="payperrentals/adminhtml_sales_order_create_search_grid" name="grid"/>
+        </reference>
+        <reference name="data">
+            <action method="setTemplate">
+                <template>payperrentals/sales/order/create/data.phtml</template>
+                <!--<type>payperrentals/sales_order_create_create_items_grid</type>-->
+            </action>
+        </reference>
+        <reference name="items">
+            <action method="setTemplate">
+                <template>payperrentals/sales/order/create/items.phtml</template>
+            </action>
+        </reference>
+        <!--<block type="adminhtml/sales_order_create_search" template="sales/order/create/abstract.phtml" name="search">
+            <block type="adminhtml/sales_order_create_search_grid" name="grid" />
+        </block>-->
+        <reference name="js">
+            <!-- <action method="addJs"><file>mage/adminhtml/sales.js</file></action>-->
+            <block type="adminhtml/template" name="zebradp" as="zebradp" template="payperrentals/product/composite/fieldset/options/js.phtml"/>
+        </reference>
+    </adminhtml_sales_order_create_index>
 </layout>

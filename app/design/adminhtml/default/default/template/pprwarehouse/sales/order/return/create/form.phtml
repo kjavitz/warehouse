@@ -9,11 +9,11 @@
 		<!--Billing Address-->
 		<div class="entry-edit">
 			<div class="entry-edit-head">
-				<h4 class="icon-head head-payment-method"><?php echo Mage::helper('sales')->__('Payment Information') ?></h4>
+                <h4 class="icon-head head-payment-method"><?php echo Mage::helper('payperrentals')->__('Payment Information') ?></h4>
 			</div>
 			<fieldset>
 				<div><?php echo $this->getPaymentHtml() ?></div>
-				<div><?php echo Mage::helper('sales')->__('The order was placed using %s', $_order->getOrderCurrencyCode()) ?></div>
+                <div><?php echo Mage::helper('payperrentals')->__('The order was placed using %s', $_order->getOrderCurrencyCode()) ?></div>
 			</fieldset>
 		</div>
 	</div>
@@ -21,12 +21,12 @@
 		<!--Shipping Address-->
 		<div class="entry-edit">
 			<div class="entry-edit-head">
-				<h4 class="icon-head head-shipping-method"><?php echo Mage::helper('sales')->__('Shipping Information') ?></h4>
+                <h4 class="icon-head head-shipping-method"><?php echo Mage::helper('payperrentals')->__('Shipping Information') ?></h4>
 			</div>
 			<fieldset>
 				<div>
 					<strong><?php echo $this->escapeHtml($_order->getShippingDescription()) ?></strong>
-					<?php echo $this->helper('sales')->__('Total Shipping Charges'); ?>:
+                    <?php echo $this->helper('payperrentals')->__('Total Shipping Charges'); ?>:
 
 					<?php if ($this->helper('tax')->displayShippingPriceIncludingTax()): ?>
 						<?php $_excl = $this->displayShippingPriceInclTax($_order); ?>
@@ -37,7 +37,7 @@
 
 					<?php echo $_excl; ?>
 					<?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
-						(<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
+                        (<?php echo $this->__('Incl. Tax:'); ?> <?php echo $_incl; ?>)
 					<?php endif; ?>
 				</div>
 			</fieldset>
@@ -47,7 +47,7 @@
 
 	<div class="entry-edit">
 		<div class="entry-edit-head">
-			<h4 class="icon-head head-products"><?php echo Mage::helper('pprwarehouse')->__('Shipments to Return') ?></h4>
+            <h4 class="icon-head head-products"><?php echo Mage::helper('payperrentals')->__('Shipments to Return') ?></h4>
 		</div>
 	</div>
 	<div id="shipment_items_container">
@@ -62,7 +62,8 @@
 				<col>
 				<col width="1">
 				<col width="1">
-			</colgroup><thead>
+                </colgroup>
+                <thead>
 			<tr class="headings">
 				<th>Return</th>
 				<th>Product</th>
@@ -78,7 +79,7 @@
                         <?php if($_needSnColumn) break; ?>
                     <?php endforeach; ?>
                     <?php if ($_needSnColumn): ?>
-				<th class="last"><span class="nobr">Serial Numbers</span></th>
+                        <th class="last"><span class="nobr"><?php echo $this->__('Serial Numbers') ?></span></th>
                     <?php endif; ?>
 			</tr>
 			</thead>
@@ -97,7 +98,7 @@
 					<h5 class="title"><span><?php echo $this->escapeHtml($_product->getName()) ?></span></h5>
 
 					<div>
-						<strong>SKU:</strong><?php echo $this->escapeHtml($_product->getSku()) ?>
+                                <strong><?php echo $this->__('SKU:'); ?></strong><?php echo $this->escapeHtml($_product->getSku()) ?>
 					</div>
 				</td>
 

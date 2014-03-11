@@ -25,7 +25,7 @@
 <!-- End Warehouse -->
 
 <?php  $_order = $this->getOrder() ?>
-<?php ITwebexperts_Payperrentals_Helper_Data::showSingleDates($this->getOrder());?>
+<?php echo ITwebexperts_Payperrentals_Helper_Data::showSingleDates($this->getOrder());?>
 <table class="data-table" id="my-orders-table" summary="<?php echo $this->__('Items Ordered') ?>">
     <col />
     <col width="1" />
@@ -78,8 +78,8 @@
                 <td class="gift-message-row" colspan="7">
                     <a href="#" title="<?php echo $this->__('Close') ?>" onclick="return giftMessageToogle('<?php echo $_item->getId() ?>');" class="btn-close"><?php echo $this->__('Close') ?></a>
                     <dl class="gift-message">
-                        <dt><strong><?php echo $this->__('From:') ?></strong> <?php echo $this->htmlEscape($_giftMessage->getRecipient()) ?></dt>
-                        <dt><strong><?php echo $this->__('To:') ?></strong> <?php echo $this->htmlEscape($_giftMessage->getSender()) ?></dt>
+                        <dt><strong><?php echo $this->__('From:') ?></strong> <?php echo $this->escapeHtml($_giftMessage->getRecipient()) ?></dt>
+                        <dt><strong><?php echo $this->__('To:') ?></strong> <?php echo $this->escapeHtml($_giftMessage->getSender()) ?></dt>
                         <dd><?php echo $this->helper('giftmessage/message')->getEscapedGiftMessage($_item) ?></dd>
                     </dl>
                 </td>

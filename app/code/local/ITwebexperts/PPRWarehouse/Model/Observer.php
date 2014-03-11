@@ -20,6 +20,105 @@ class ITwebexperts_PPRWarehouse_Model_Observer
 		}
 		$order->setTotalQtyOrdered($realTotalQtyOrdered);
 	}
+
+    public function beforeFilterOrder($_observer){
+        $_collection = $_observer->getEvent()->getCollection();
+
+        if (Mage::app()->getRequest()->getParam('stock_id')) {
+            $_stockId = Mage::app()->getRequest()->getParam('stock_id');
+        } elseif (Mage::registry('stock_id')) {
+            $_stockId = Mage::registry('stock_id');
+        }
+        if(isset($_stockId)){
+            $_collection->addFieldToFilter('main_table.stock_id', $_stockId);
+        }
+    }
+
+    public function calendarNewElements($observer){
+
+        $returnObj = $observer->getEvent()->getResult();
+        $templateNewElements = 'pprwarehouse/calendar/new_elements.phtml';
+        $_jsContainerPrefix =  $observer->getEvent()->getJsContainerPrefix();
+        $_jsFunctionPrefix = $observer->getEvent()->getJsFunctionPrefix();
+        $isAdminGlobal = $observer->getEvent()->getIsAdminGlobal();
+        $isAdmin = $observer->getEvent()->getIsAdmin();
+        $quoteItemId = $observer->getEvent()->getQuoteItemId();
+        $quoteItem = $observer->getEvent()->getQuoteItem();
+
+        $return = Mage::app()->getLayout()
+            ->createBlock("core/template")
+            ->setData('area','frontend')
+            ->setData('jsContainerPrefix', $_jsContainerPrefix)
+            ->setData('jsFunctionPrefix', $_jsFunctionPrefix)
+            ->setData('isAdminGlobal', $isAdminGlobal)
+            ->setData('isAdmin', $isAdmin)
+            ->setData('quoteItemId', $quoteItemId)
+            ->setData('quoteItem', $quoteItem)
+            ->setTemplate($templateNewElements)
+            ->toHtml();
+
+        $returnObj->setReturn($return);
+    }
+
+    public function optionsGridNames($observer){
+
+        $returnObj = $observer->getEvent()->getResult();
+        $return = '';
+        $return .= '<th class="no-link">'. Mage::helper('pprwarehouse')->__('Warehouse'). '</th>';
+        $returnObj->setReturn($return);
+    }
+
+    public function optionsGridCols($observer){
+
+        $returnObj = $observer->getEvent()->getResult();
+        $return = '';
+        $return .= '<col />';
+        $returnObj->setReturn($return);
+    }
+
+    public function optionsGridButtons($observer){
+
+        $returnObj = $observer->getEvent()->getResult();
+        $classCall = $observer->getEvent()->getClass();
+        $return = '';
+        $helper = Mage::helper('warehouse');
+        $config = $helper->getConfig();
+        if ($config->isMultipleMode()){
+            $return .= $classCall->getButtonHtml(Mage::helper('pprwarehouse')->__('Reset Items'),'order.itemsReset()');
+        }
+        $returnObj->setReturn($return);
+    }
+
+
+
+
+    public function optionsGrid($observer){
+
+        $returnObj = $observer->getEvent()->getResult();
+        $_item = $observer->getEvent()->getItem();
+        $helper = Mage::helper('warehouse');
+        $config = $helper->getConfig();
+
+        $return = '<td class="a-left v-middle">';
+        if ($config->isMultipleMode()){
+            $return .= '<select name="item['.$_item->getId().'][stock_id]" title="'. $helper->__('Warehouse') .'">';
+            $warehouses = $_item->getInStockWarehouses();
+            foreach ($warehouses as $warehouse){
+                $return .= '<option value="'. $warehouse->getStockId().'" '. (($warehouse->getStockId() == $_item->getStockId())?'selected="selected"':'').'>'.$warehouse->getTitle() .'</option>';
+            }
+            $return .= '</select>';
+        }else{
+            if ($_item->getWarehouse())
+                $return .= $_item->getWarehouseTitle();
+            else
+                $return .= $helper->__('No warehouse');
+        }
+
+
+        $return .= '</td>';
+        $returnObj->setReturn($return);
+    }
+
     //this function gets the max quantity from all the stocks. But not sure this is ok.
     public function getMaxQuantity($observer){
 

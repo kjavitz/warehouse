@@ -18,7 +18,7 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 <div class="content-header">
 	<table cellspacing="0" class="grid-header">
 		<tr>
-			<td><h3><?=$this->__('Quantity Report')?></h3></td>
+            <td><h3><?php echo  $this->__('Quantity Report') ?></h3></td>
 		</tr>
 	</table>
 </div>
@@ -32,7 +32,7 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 		<table cellspacing="0" class="form-list-s">
 			<tr>
                 <td class="label"><?php echo  $this->__('Search by name') ?></td>
-				<td class="input-ele"><input class="input-text productName" name="productName" /></td>
+                <td class="input-ele"><input class="input-text productName" name="productName" value="<?php if(isset($_params['productName'])) echo $_params['productName'] ?>"/></td>
 
                 <td class="label"><?php echo  $this->__('Search by Sku') ?></td>
                 <td class="input-ele"><input class="input-text productSku" name="productSku" value="<?php if(isset($_params['productSku'])) echo $_params['productSku'] ?>"/></td>
@@ -50,15 +50,14 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 
                 <td class="label"><?php echo  $this->__('Go to date') ?></td>
 				<td>
-					<?php
-					$gotoDate = '';
-					$gotoDateFullCalendar = '';
-					if(urldecode($this->getRequest()->getParam('gotoDate'))){
-						$zDate = new Zend_Date(urldecode($this->getRequest()->getParam('gotoDate')), Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT));
-						$gotoDate = urldecode($this->getRequest()->getParam('gotoDate'));
-						$gotoDateFullCalendar = $zDate->get('yyyy-MM-dd');
-					}
-					echo $this->getLayout()->createBlock('core/html_date')
+                    <?php $gotoDate = ''; ?>
+                    <?php $gotoDateFullCalendar = ''; ?>
+                    <?php if (urldecode($this->getRequest()->getParam('gotoDate'))): ?>
+                        <?php $zDate = new Zend_Date(urldecode($this->getRequest()->getParam('gotoDate')), Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT)); ?>
+                        <?php $gotoDate = urldecode($this->getRequest()->getParam('gotoDate')); ?>
+                        <?php $gotoDateFullCalendar = $zDate->get('yyyy-MM-dd'); ?>
+                    <?php endif; ?>
+                    <?php echo $this->getLayout()->createBlock('core/html_date')
                         ->setImage(Mage::getDesign()->getSkinUrl('images/grid-cal.gif'))
                         ->setFormat(Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_SHORT))
                         ->setName('gotoDate')
@@ -77,37 +76,35 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
 				</td>
 			</tr>
 			<tr>
-				<td colspan="4" class="a-right" style="padding-top: 10px;">
-					<button class="searchAllBut" type="button" style="display: inline-block;"><span><?=$this->__('Search All Products')?></span></button>
-					<button class="searchBut" type="button" style="display: inline-block;"><span><?=$this->__('Search')?></span></button>
+                <td colspan="8" class="a-right" style="padding-top: 10px;">
+                    <button class="searchAllBut" type="button" style="display: inline-block;"><span><?php echo  $this->__('Search All Products') ?></span></button>
+                    <button class="searchBut" type="button" style="display: inline-block;"><span><?php echo  $this->__('Search') ?></span></button>
 				</td>
 			</tr>
 		</table>
 	</form>
 
-	<input type="checkbox" class="hasName"<?php if(!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1') echo ' checked="checked" ';?>/> <?=$this->__('Show Product Name')?><br/>
-	<input type="checkbox" class="hasSKU"<?php if(!Mage::app()->getRequest()->getParam('hasSKU') || Mage::app()->getRequest()->getParam('hasSKU') == '1') echo ' checked="checked" ';?>/> <?=$this->__('Show Product SKU')?><br/>
-	<input type="checkbox" class="hasQty"<?php if(!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1') echo ' checked="checked" ';?>/> <?=$this->__('Show Product Total Qty')?><br/>
+    <input type="checkbox" class="hasName"<?php if (!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1') echo ' checked="checked" '; ?>/> <?php echo  $this->__('Show Product Name') ?><br/>
+    <input type="checkbox" class="hasSKU"<?php if (!Mage::app()->getRequest()->getParam('hasSKU') || Mage::app()->getRequest()->getParam('hasSKU') == '1') echo ' checked="checked" '; ?>/> <?php echo  $this->__('Show Product SKU') ?><br/>
+    <input type="checkbox" class="hasQty"<?php if (!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1') echo ' checked="checked" '; ?>/> <?php echo  $this->__('Show Product Total Qty') ?><br/>
 </div>
 
 <div style="position: relative;top:56px;border-bottom: 1px solid #000000">
-	<?php if(!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1'){?>
+    <?php if (!Mage::app()->getRequest()->getParam('hasName') || Mage::app()->getRequest()->getParam('hasName') == '1'): ?>
 		<div style="width:100px;display: inline-block;font-weight: bold;font-size: 14px;">Name</div>
-	<?php }?>
-	<?php if(!Mage::app()->getRequest()->getParam('hasSKU') || Mage::app()->getRequest()->getParam('hasSKU') == '1'){?>
+    <?php endif; ?>
+    <?php if (!Mage::app()->getRequest()->getParam('hasSKU') || Mage::app()->getRequest()->getParam('hasSKU') == '1'): ?>
 		<div style="width:100px;display: inline-block;font-weight: bold;font-size: 14px;">SKU</div>
-	<?php }?>
-	<?php if(!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1'){?>
-		<div style="width:40px;display: inline-block;font-weight: bold;font-size: 14px;">Qty</div>
-	<?php }?>
+    <?php endif; ?>
+    <?php if (!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1'): ?>
+        <div style="width:30px;display: inline-block;font-weight: bold;font-size: 14px;">Qty</div>
+    <?php endif; ?>
 	<div style="width:100px;display: inline-block;font-weight: bold;font-size: 14px;">Warehouse</div>
 </div>
 <div id="calendarProducts"></div>
 
 <div id="pager">
-	<?php
-	echo $this->getPagerHtml();
-	?>
+    <?php echo $this->getPagerHtml(); ?>
 </div>
 
 <?php $localeDateFormat = Mage::app()->getLocale()->getDateFormat(Mage_Core_Model_Locale::FORMAT_TYPE_LONG); ?>
@@ -155,7 +152,7 @@ $_warehouses = Mage::helper('warehouse')->getWarehouses();
         <?php $nameqty .= '<div style="width:100px;display:inline-block;">' . $Product->getSku() . '</div>'; ?>
     <?php endif; ?>
     <?php if (!Mage::app()->getRequest()->getParam('hasQty') || Mage::app()->getRequest()->getParam('hasQty') == '1'): ?>
-        <?php $nameqty .= '<div style="width:30px;display:inline-block;">' .  (int)Mage::helper('pprwarehouse')->getQtyForProductAndStock($Product, $stockId) . '</div>'; ?>
+        <?php $nameqty .= '<div style="width:30px;display:inline-block;">' .  ITwebexperts_Payperrentals_Helper_Data::getQuantity($Product->getId()) . '</div>'; ?>
     <?php endif; ?>
     <?php if ($nameqty == ''): ?>
         <?php $nameqty .= $Product->getName(); ?>

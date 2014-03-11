@@ -54,7 +54,7 @@
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						<span class="cart-price">
 					<?php endif; ?>
-					<span class="label"><?php echo $this->__('Excl. Tax'); ?>:</span>
+                        <span class="label"><?php echo $this->__('Excl. Tax:'); ?></span>
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						</span>
 					<?php endif; ?>
@@ -111,7 +111,7 @@
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						<span class="cart-price">
 					<?php endif; ?>
-					<span class="label"><?php echo $this->__('Incl. Tax'); ?>:</span>
+                        <span class="label"><?php echo $this->__('Incl. Tax:'); ?></span>
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						</span>
 					<?php endif; ?>
@@ -171,20 +171,20 @@
 			(!$_item->getParentItem() && !$this->isChildCalculated())): ?>
 			<span class="nobr">
             <?php if ($_item->getQtyOrdered() > 0): ?>
-				<?php echo Mage::helper('sales')->__('Ordered'); ?>: <strong><?php echo $_item->getQtyOrdered()*1 ?></strong><br />
+                <?php echo Mage::helper('payperrentals')->__('Ordered'); ?>: <strong><?php echo $_item->getQtyOrdered()*1 ?></strong><br />
 			<?php endif; ?>
 				<?php if ($_item->getQtyShipped() > 0 && !$this->isShipmentSeparately()): ?>
-					<?php echo Mage::helper('sales')->__('Shipped'); ?>: <strong><?php echo $_item->getQtyShipped()*1 ?></strong><br />
+                <?php echo Mage::helper('payperrentals')->__('Shipped'); ?>: <strong><?php echo $_item->getQtyShipped()*1 ?></strong><br />
 				<?php endif; ?>
 				<?php if ($_item->getQtyCanceled() > 0): ?>
-					<?php echo Mage::helper('sales')->__('Canceled'); ?>: <strong><?php echo $_item->getQtyCanceled()*1 ?></strong><br />
+                <?php echo Mage::helper('payperrentals')->__('Canceled'); ?>: <strong><?php echo $_item->getQtyCanceled()*1 ?></strong><br />
 				<?php endif; ?>
 				<?php if ($_item->getQtyRefunded() > 0): ?>
-					<?php echo Mage::helper('sales')->__('Refunded'); ?>: <strong><?php echo $_item->getQtyRefunded()*1 ?></strong>
+                <?php echo Mage::helper('payperrentals')->__('Refunded'); ?>: <strong><?php echo $_item->getQtyRefunded()*1 ?></strong>
 				<?php endif; ?>
             </span>
 		<?php elseif ($_item->getQtyShipped() > 0 && $_item->getParentItem() && $this->isShipmentSeparately()): ?>
-			<span class="nobr"><?php echo Mage::helper('sales')->__('Shipped'); ?>: <strong><?php echo $_item->getQtyShipped()*1 ?></strong></span>
+            <span class="nobr"><?php echo Mage::helper('payperrentals')->__('Shipped'); ?>: <strong><?php echo $_item->getQtyShipped()*1 ?></strong></span>
 		<?php else: ?>
 			&nbsp;
 		<?php endif; ?>
@@ -197,7 +197,7 @@
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						<span class="cart-price">
 					<?php endif; ?>
-					<span class="label"><?php echo $this->__('Excl. Tax'); ?>:</span>
+                        <span class="label"><?php echo $this->__('Excl. Tax:'); ?></span>
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						</span>
 					<?php endif; ?>
@@ -254,7 +254,7 @@
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						<span class="cart-price">
 					<?php endif; ?>
-					<span class="label"><?php echo $this->__('Incl. Tax'); ?>:</span>
+                        <span class="label"><?php echo $this->__('Incl. Tax:'); ?></span>
 					<?php if (!Mage::helper('weee')->typeOfDisplay($this->getItem(), array(1, 4), 'sales') && (float)$this->getItem()->getWeeeTaxAppliedAmount()): ?>
 						</span>
 					<?php endif; ?>

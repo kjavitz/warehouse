@@ -125,7 +125,7 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
                 $_stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
             }
         }else{
-            $_stockProducts = $this->getRequest()->getParam('stock_products');
+            $_stockProducts = $this->getRequest()->getParam('stock_products')?Zend_Json::decode($this->getRequest()->getParam('stock_products')):array();
         }
 
         $output = array();
@@ -189,6 +189,7 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
                     'remaining' => ($_stockAvail - $_qty)
                 );
             }
+            Mage::unregister('stock_id');
             /*Varien_Profiler::stop('child_stock_logic');*/
 
         }
