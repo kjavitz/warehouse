@@ -100,7 +100,7 @@ class ITwebexperts_PPRWarehouse_Model_Mysql4_Cataloginventory_Stock_Item
 
                 if($_minQty > 0){
                     $row['stock_id'] = $_stockId;
-                    $row['qty'] = $_minQty;
+                    $row['qty'] = intval($_minQty);
                     break;
                 }
             }

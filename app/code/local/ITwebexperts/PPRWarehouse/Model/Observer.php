@@ -141,7 +141,7 @@ class ITwebexperts_PPRWarehouse_Model_Observer
             $_stockArr = $helper->getValidStockIds();
         }
         if(ITwebexperts_Payperrentals_Helper_Data::isReservationType($_product)){
-            $_minRetQty = 1000000;
+            $_minRetQty = -1000000;
             foreach ($_stockArr as $_stockId) {
                 $_retQty = Mage::helper('pprwarehouse')->getQtyForProductAndStock($_product, $_stockId);
 
@@ -164,12 +164,12 @@ class ITwebexperts_PPRWarehouse_Model_Observer
                     }
                     $_retQty = $_minQty;
                 }
-                if($_minRetQty > $_retQty){
+                if($_minRetQty < $_retQty){
                     $_minRetQty = $_retQty;
                 }
             }
-            if ($_minRetQty == 1000000) {
-                $_minRetQty = $_retQty;
+            if ($_minRetQty == -1000000) {
+                $_minRetQty = 0;
             }
             $_retQty = $_minRetQty;
             $_retObj->setRetQty($_retQty);

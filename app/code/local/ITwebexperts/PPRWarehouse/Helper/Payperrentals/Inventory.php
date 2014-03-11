@@ -27,6 +27,7 @@ class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory extends ITwebexpe
             }
             $_qty = $_qty - $_oldQty;
         }
+        //this part should only be needed if is single warehouse
         if($_quoteItem && $_quoteItem->getStockId()){
             if(Mage::registry('stock_id')){
                 $_regKey = Mage::registry('stock_id');
