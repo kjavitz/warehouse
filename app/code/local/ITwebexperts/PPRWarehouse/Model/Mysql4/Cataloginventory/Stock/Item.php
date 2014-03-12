@@ -77,15 +77,13 @@ class ITwebexperts_PPRWarehouse_Model_Mysql4_Cataloginventory_Stock_Item
 
             $_productId = $product->getId();
             foreach ($rows as $_iRow) {
-                $_retQty = $_iRow['qty'];
+                $_retQty = intval($_iRow['qty']);
                 $_stockId = $_iRow['stock_id'];
                 $_minQty = 1000000;
                 if(isset($_start_date) && isset($_end_date)){
-                    /** @var $_pprHelper ITwebexperts_Payperrentals_Helper_Data*/
-                    $_pprHelper = Mage::helper('payperrentals');
                     Mage::unregister('stock_id');
                     Mage::register('stock_id', $_stockId);
-                    $bookedArray = $_pprHelper->getBookedQtyForProducts($_productId, $_start_date, $_end_date);
+                    $bookedArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForProducts($_productId, $_start_date, $_end_date);
                     foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
                         if (strtotime($dateFormatted) >= strtotime($_start_date) && strtotime($dateFormatted) <= strtotime($_end_date)) {
                             if ($_minQty > ($_retQty - $_paramAr[$_productId]['qty'])) {
@@ -100,7 +98,7 @@ class ITwebexperts_PPRWarehouse_Model_Mysql4_Cataloginventory_Stock_Item
 
                 if($_minQty > 0){
                     $row['stock_id'] = $_stockId;
-                    $row['qty'] = intval($_minQty);
+                    $row['qty'] = $_minQty;
                     break;
                 }
             }

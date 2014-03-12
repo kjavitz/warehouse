@@ -68,16 +68,16 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
             // this relationship should be in the opposite side (returns has a reference to reservation order and not the resOrder to the return)
             Mage::getResourceSingleton('payperrentals/reservationorders')->updateSendReturnById($id, $sendReturn->getId());
 
-            $_order = Mage::getModel('sales/order')->load($resOrder->getOrderId());
-            $_order->setSendDatetime($sendTime);
-            $_order->save();
+            $order = Mage::getModel('sales/order')->load($resOrder->getOrderId());
+            $order->setSendDatetime($sendTime);
+            $order->save();
             $product = Mage::getModel('catalog/product')->load($sendReturn->getProductId());
-            $returnPerCustomer[$_order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['name'] = $product->getName();
-            $returnPerCustomer[$_order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['serials'] = $sendReturn->getSn();
-            $returnPerCustomer[$_order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['start_date'] = $sendReturn->getResStartdate();
-            $returnPerCustomer[$_order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['end_date'] = $sendReturn->getResEndDate();
-            $returnPerCustomer[$_order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['send_date'] = $sendReturn->getSendDate();
-            //$returnPerCustomer[$_order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['return_date'] = $resOrder->getReturnDate();
+            $returnPerCustomer[$order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['name'] = $product->getName();
+            $returnPerCustomer[$order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['serials'] = $sendReturn->getSn();
+            $returnPerCustomer[$order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['start_date'] = $sendReturn->getResStartdate();
+            $returnPerCustomer[$order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['end_date'] = $sendReturn->getResEndDate();
+            $returnPerCustomer[$order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['send_date'] = $sendReturn->getSendDate();
+            //$returnPerCustomer[$order->getCustomerEmail()][$resOrder->getOrderId()][$product->getId()]['return_date'] = $resOrder->getReturnDate();
         }
 
         ITwebexperts_Payperrentals_Helper_Data::sendEmail('send', $returnPerCustomer);
@@ -119,13 +119,13 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
             return;
         }
         if (!$this->getRequest()->getParam('stock_products')) {
-            $_stockId = $this->getRequest()->getParam('stock_id');
-            if (!$_stockId) {
+            $stockId = $this->getRequest()->getParam('stock_id');
+            if (!$stockId) {
                 $helper = Mage::helper('warehouse');
-                $_stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
+                $stockId = $helper->getSessionStockId() ? : $helper->getDefaultStockId();
             }
         }else{
-            $_stockProducts = $this->getRequest()->getParam('stock_products')?Zend_Json::decode($this->getRequest()->getParam('stock_products')):array();
+            $stockProducts = $this->getRequest()->getParam('stock_products')?Zend_Json::decode($this->getRequest()->getParam('stock_products')):array();
         }
 
         $output = array();
@@ -149,44 +149,44 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
             }
 
             /*Varien_Profiler::start('child_stock_logic');*/
-            $_childFlag = false;
+            $childFlag = false;
             if ($this->getRequest()->getParam('childItems')) {
-                $_childItemsAr = Zend_Json::decode($this->getRequest()->getParam('childItems'));
-                if (array_key_exists($product->getId(), $_childItemsAr)) {
-                    $_childItemIds = explode(',', $_childItemsAr[$product->getId()]);
-                    $_outputAvailAr = array();
-                    $_outputRemainingAr = array();
-                    $_childProductCollection = Mage::getResourceModel('catalog/product_collection')
-                        ->addFieldToFilter('entity_id', array('in' => $_childItemIds));
-                    /** @var $_childProduct Mage_Catalog_Model_Product */
-                    foreach ($_childProductCollection as $_childProduct) {
-                        $_childFlag = true;
-                        Mage::register('stock_id', isset($_stockProducts[$_childProduct->getId()])?$_stockProducts[$_childProduct->getId()]:$_stockId);
-                        $_stockAvail = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($_childProduct->getId(), $startDate, $endDate);
-                        $_childDescription = '';
-                        if ($_childProductCollection->getSize() > 1) {
-                            $_childDescription = '<strong>' . $_childProduct->getSku() . ':</strong> ';
+                $childItemsAr = Zend_Json::decode($this->getRequest()->getParam('childItems'));
+                if (array_key_exists($product->getId(), $childItemsAr)) {
+                    $childItemIds = explode(',', $childItemsAr[$product->getId()]);
+                    $outputAvailAr = array();
+                    $outputRemainingAr = array();
+                    $childProductCollection = Mage::getResourceModel('catalog/product_collection')
+                        ->addFieldToFilter('entity_id', array('in' => $childItemIds));
+                    /** @var $childProduct Mage_Catalog_Model_Product */
+                    foreach ($childProductCollection as $childProduct) {
+                        $childFlag = true;
+                        Mage::register('stock_id', isset($stockProducts[$childProduct->getId()])?$stockProducts[$childProduct->getId()]:$stockId);
+                        $stockAvail = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($childProduct->getId(), $startDate, $endDate);
+                        $childDescription = '';
+                        if ($childProductCollection->getSize() > 1) {
+                            $childDescription = '<strong>' . $childProduct->getSku() . ':</strong> ';
                         }
-                        $_qty = (isset($qtys[$product->getId()]) ? $qtys[$product->getId()] : 1);
-                        $_outputAvailAr[] = $_childDescription . $_stockAvail;
-                        $_outputRemainingAr[] = $_childDescription . ($_stockAvail - $_qty);
+                        $qty = (isset($qtys[$product->getId()]) ? $qtys[$product->getId()] : 1);
+                        $outputAvailAr[] = $childDescription . $stockAvail;
+                        $outputRemainingAr[] = $childDescription . ($stockAvail - $qty);
                     }
 
-                    if ($_childFlag) {
+                    if ($childFlag) {
                         $output[$product->getId()] = array(
-                            'avail' => implode('<br/>', $_outputAvailAr),
-                            'remaining' => implode('<br/>', $_outputRemainingAr)
+                            'avail' => implode('<br/>', $outputAvailAr),
+                            'remaining' => implode('<br/>', $outputRemainingAr)
                         );
                     }
                 }
             }
-            if (!$_childFlag) {
-                $_qty = (isset($qtys[$product->getId()]) ? $qtys[$product->getId()] : 1);
-                Mage::register('stock_id', isset($_stockProducts[$product->getId()])?$_stockProducts[$product->getId()]:$_stockId);
-                $_stockAvail = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($product->getId(), $startDate, $endDate);
+            if (!$childFlag) {
+                $qty = (isset($qtys[$product->getId()]) ? $qtys[$product->getId()] : 1);
+                Mage::register('stock_id', isset($stockProducts[$product->getId()])?$stockProducts[$product->getId()]:$stockId);
+                $stockAvail = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($product->getId(), $startDate, $endDate);
                 $output[$product->getId()] = array(
-                    'avail' => $_stockAvail,
-                    'remaining' => ($_stockAvail - $_qty)
+                    'avail' => $stockAvail,
+                    'remaining' => ($stockAvail - $qty)
                 );
             }
             Mage::unregister('stock_id');
@@ -194,6 +194,102 @@ class ITwebexperts_PPRWarehouse_Adminhtml_AjaxController extends ITwebexperts_Pa
 
         }
         $this->getResponse()->setBody(Zend_Json::encode($output));
+    }
+
+    /**
+     *
+     */
+    public function getEventsAction()
+    {
+
+        $startDate = date('Y-m-d', urldecode($this->getRequest()->getParam('start'))) . ' 00:00:00';
+        $endDate = date('Y-m-d', urldecode($this->getRequest()->getParam('end'))) . ' 23:59:59';
+        $productIds = explode(',', urldecode($this->getRequest()->getParam('productsids')));
+        $events = array();
+        $stockIds = Mage::helper('warehouse')->getStockIds();
+
+        foreach ($stockIds as $stockId) {
+            Mage::unregister('stock_id');
+            Mage::register('stock_id', $stockId);
+            $bookedByIds = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForProducts($productIds, $startDate, $endDate, true);
+            $newArr = array();
+            $configHelper = Mage::helper('payperrentals/config');
+
+            foreach ($bookedByIds['booked'] as $dateFormatted => $productAr) {
+                foreach ($productAr as $productId => $paramAr) {
+
+                    foreach ($paramAr['orders']['order_ids'] as $incrementId) {
+
+                        $start = strtotime($paramAr['orders']['start_end'][$incrementId]['period_start']);
+                        $end = strtotime($paramAr['orders']['start_end'][$incrementId]['period_end']);
+
+                        if (date('H:i:s', $start) != '00:00:00' || date('H:i:s', $end) != '23:59:59') {
+                            $time_increment = $configHelper->getTimeIncrement() * 60;
+                        } else {
+                            $time_increment = 3600 * 24;
+                        }
+                        $iQty = $paramAr['qty'];
+                        while ($start <= $end) {
+                            $df = date('Y-m-d H:i', $start);
+
+                            if (!isset($newArr[$df][$productId])) {
+                                $newArr[$df][$productId]['qty'] = $iQty;
+                            }
+
+                            foreach ($newArr as $newDf => $_prod) {
+                                if (date('Y-m-d', strtotime($newDf)) == date('Y-m-d', strtotime($df))) {
+                                    if (isset($newArr[$newDf][$productId]['order_id']) && !in_array($incrementId, $newArr[$newDf][$productId]['order_id'])) {
+                                        $newArr[$newDf][$productId]['order_id'][] = $incrementId;
+                                    }
+                                }
+                            }
+                            if (!isset($newArr[$df][$productId]['order_id']) || !in_array($incrementId, $newArr[$df][$productId]['order_id'])) {
+                                $newArr[$df][$productId]['order_id'][] = $incrementId;
+                            }
+                            $start += $time_increment;
+                        }
+
+
+                    }
+                }
+
+            }
+
+            foreach ($newArr as $dateFormatted => $productAr) {
+                foreach ($productAr as $productId => $paramAr) {
+                    $maxQty = ITwebexperts_Payperrentals_Helper_Inventory::getQuantity($productId);
+                    if (date('H:i', strtotime($dateFormatted)) != '00:00') {
+                        $time_increment = $configHelper->getTimeIncrement() * 60;
+                        $start = date('Y-m-d', strtotime($dateFormatted)) . ' ' . date('H:i', strtotime($dateFormatted)) . ':00';
+                        $end = date('Y-m-d', strtotime($dateFormatted)) . ' ' . date('H:i', strtotime('+' . $time_increment . ' SECOND', strtotime($dateFormatted))) . ':00';
+                        $isHour = true;
+                    } else {
+                        $start = date('Y-m-d', strtotime($dateFormatted)) . ' 00:00:00';
+                        $end = date('Y-m-d', strtotime($dateFormatted)) . ' 23:59:59';
+                        $isHour = false;
+                    }
+
+                    $evb = array(
+                            'title' => $paramAr['qty'] . '/' . ($maxQty - $paramAr['qty']),
+                            'url' => urlencode($dateFormatted . '||' . implode(';', $paramAr['order_id']) . '||' . $productId . '||' . $stockId),
+                            'start' => $start,
+                            'end' => $end,
+                            'qty' => $paramAr['qty'],
+                            'maxqty' => ($maxQty - $paramAr['qty']),
+                            'df' => date('Y-m-d', strtotime($dateFormatted)),
+                            'is_hour' => $isHour,
+                            'resource' => $productId . '_' . $stockId
+                    );
+                    if ($maxQty - $paramAr['qty'] < 0) {
+                        $evb['backgroundColor'] = '#cc0000';
+                        $evb['className'] = 'overbookColor';
+                    }
+                    $events[] = $evb;
+                }
+            }
+        }
+
+        $this->getResponse()->setBody(Zend_Json::encode($events));
     }
 
 

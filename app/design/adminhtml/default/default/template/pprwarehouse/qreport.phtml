@@ -230,7 +230,7 @@ $resources[] = array(
             eventReRender: function(event, element) {
             },
             eventRender: function(event, element) {
-                if(currentView.name == 'resourceMonth'){
+                if(currentView.name == 'resourceMonth' || currentView.name == 'resourceWeek'){
                     if(/*event.is_hour == true && */typeof beforeQty[event.resource] != 'undefined' && typeof beforeQty[event.resource][event.df] != 'undefined' && event.is_hour){
                         if(parseInt(beforeQty[event.resource][event.df].qty) < parseInt(event.qty)){
 
@@ -292,7 +292,7 @@ $resources[] = array(
                             var positionDetail = 'top left';
                             if(numInMonth - clickDay < numInMonth / 2){
                                 positionDetail = 'top right';
-                                xLeft = -380;
+                                xLeft = -580;
                             }
 
 							$jppr('a.fc-event[href="'+event.url+'"]').qtip({

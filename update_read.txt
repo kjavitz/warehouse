@@ -1,0 +1,6 @@
+Because of a bad design by Magento which doesn't send quote item for function checkQuoteItemQty we have to rewrite:
+ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item::checkQuoteItemQty to add that as a parameter so in cocnlsuion we need to update all the places were is used:
+
+ITwebexperts_PPRWarehouse_Model_Sales_Quote_Item::checkQty
+ITwebexperts_PPRWarehouse_Model_CatalogInventory_Observer::checkQuoteItemQtyWithOptions
+ITwebexperts_PPRWarehouse_Model_CatalogInventory_Observer::checkQuoteItemQtyWithoutOptions

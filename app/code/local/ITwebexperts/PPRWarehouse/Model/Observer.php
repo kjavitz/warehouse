@@ -146,11 +146,9 @@ class ITwebexperts_PPRWarehouse_Model_Observer
                 $_retQty = Mage::helper('pprwarehouse')->getQtyForProductAndStock($_product, $_stockId);
 
                 if(!is_null($_start_date) && !is_null($_end_date)){
-                    /** @var $_pprHelper ITwebexperts_Payperrentals_Helper_Data*/
-                    $_pprHelper = Mage::helper('payperrentals');
                     Mage::unregister('stock_id');
                     Mage::register('stock_id', $_stockId);
-                    $bookedArray = $_pprHelper->getBookedQtyForProducts($_productId, $_start_date, $_end_date);
+                    $bookedArray = ITwebexperts_Payperrentals_Helper_Data::getBookedQtyForProducts($_productId, $_start_date, $_end_date);
                     $_minQty = 1000000;
                     foreach ($bookedArray['booked'] as $dateFormatted => $_paramAr) {
                         if (strtotime($dateFormatted) >= strtotime($_start_date) && strtotime($dateFormatted) <= strtotime($_end_date)) {
@@ -171,7 +169,7 @@ class ITwebexperts_PPRWarehouse_Model_Observer
             if ($_minRetQty == -1000000) {
                 $_minRetQty = 0;
             }
-            $_retQty = $_minRetQty;
+            $_retQty = intval($_minRetQty);
             $_retObj->setRetQty($_retQty);
         }else{
             $_minRetQty = 1000000;
@@ -181,7 +179,7 @@ class ITwebexperts_PPRWarehouse_Model_Observer
                     $_minRetQty = $_retQty;
                 }
             }
-            $_retQty = $_minRetQty;
+            $_retQty = intval($_minRetQty);
             $_retObj->setRetQty($_retQty);
         }
         if(isset($regKey)){
