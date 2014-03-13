@@ -17,8 +17,6 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
 	 */
 	public function checkQuoteItemQty($qty, $summaryQty, $origQty = 0, $quoteItem = null)
 	{
-
-		$originalQty = $this->getData('qty');
 		if($quoteItem && $quoteItem->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
 
 			$product = $quoteItem->getProduct();
@@ -54,7 +52,7 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
                 $endDateArr = array($endDateVal);
             }
             $stockId = $this->getStockId();
-            $newQty = 0;
+            //$newQty = 0;
             foreach ($startDateArr as $count => $startDate) {
                 $endDate = $endDateArr[$count];
 
@@ -64,24 +62,30 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
                         Mage::unregister('stock_id');
                     }
                     Mage::register('stock_id', $stockId);
-                    $newQty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::availableQty($product, $startDate, $endDate, $quoteItem);
+                    /** @var $inventoryHelper ITwebexperts_Payperrentals_Helper_Inventory */
+
+                    $iQty = ITwebexperts_Payperrentals_Helper_Data::getUpdatingQty($quoteItem);
+                    if($iQty){
+                        $qty = $iQty;
+                    }
+                    Mage::register('no_quote', 1);
+                    $inventoryHelper = Mage::helper('payperrentals/inventory');
+                    $isAvailable = $inventoryHelper->isAvailable($product->getId(), $startDate, $endDate, $qty, $quoteItem);
                     //$return = parent::checkQuoteItemQty( $newQty, $summaryQty, $origQty );
-                    if($newQty <= 0){
+                    if(!$isAvailable){
                         $result->setHasError(true);
                     }
                 }
             }
-            if($newQty > 0){
-                $this->setQty($newQty);
-            }
+
             if(isset($_regKey)){
                 Mage::unregister('stock_id');
                 Mage::register('stock_id', $_regKey);
             }
+
             return $result;
 		}
         $return = parent::checkQuoteItemQty( $qty, $summaryQty, $origQty );
-		$this->setQty($originalQty);
 		return $return;
 	}
 
