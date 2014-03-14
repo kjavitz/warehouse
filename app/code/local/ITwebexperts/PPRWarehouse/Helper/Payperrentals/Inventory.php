@@ -1,64 +1,69 @@
 <?php
 class ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory extends ITwebexperts_Payperrentals_Helper_Inventory {
 
-
-    /**
-     * Function to get if product is available between dates
-     * @param $productId
-     * @param int $qty
-     * @param $start_date
-     * @param $end_date
-     * @return bool
+    /*
+     * Function to get maximum quantity for product
+     * @param Mage_Catalog_Product|int $product
+     * @param $startDate
+     * @param $endDate
+     * @return int
      */
-    public function isAvailable($productId, $start_date, $end_date, $qty, $quoteItem = false)
+
+    public static function getQuantityForProductAndStock($product, $stockId, $origQty = -1)
     {
-        //return true;
-        //if(!Mage::registry('no_quote')){
-            if($quoteItem && is_numeric($quoteItem->getId())){
-                if(Mage::registry('stock_id')){
-                    $regKey = Mage::registry('stock_id');
-                }elseif($quoteItem->getStockId()){
-                    $regKey = $quoteItem->getStockId();
-                    Mage::register('stock_id',$regKey);
+        if (!is_object($product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION))) {
+            $source = unserialize($product->getCustomOption('info_buyRequest')->getValue());
+            if (isset($source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION])) {
+                $startDateval = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
+                $endDateVal = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
+                if (isset($source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL])) {
+                    $nonSequential = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL];
                 }
-
-                $collQuotes = Mage::getModel('payperrentals/reservationquotes')
-                    ->getCollection()
-                    ->addProductIdFilter($productId)
-                    ->addSelectFilter("start_date = '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($start_date) . "' AND end_date = '" . ITwebexperts_Payperrentals_Helper_Data::toDbDate($end_date) . "' AND quote_item_id = '" . $quoteItem->getId() . "'");
-
-                //if(isset($regKey)){
-                  //  $collQuotes->addFieldToFilter('stock_id', $regKey);
-                //}
-
-                $oldQty = 0;
-                foreach ($collQuotes as $oldQuote) {
-                    if(isset($regKey) && $oldQuote->getStockId() && $oldQuote->getStockId() != $regKey){
-                        $oldQty += $oldQuote->getQty();
-                    }
-                }
-
-                //if (Mage::app()->getRequest()->getParam('qty')) {
-                  //  $oldQty = 0;
-                //}
-                $qty = $qty - $oldQty;
             }
-            //this part should only be needed if is single warehouse
+        } else {
+            $startDateval = $product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION)->getValue();
+            $endDateVal = $product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION)->getValue();
+            if (is_object($product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL))) {
+                $nonSequential = $product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL)->getValue();
+            }
+        }
 
-        //}
-        if (self::isAllowedOverbook($productId)) {
-            return true;
+        if ($nonSequential == 1) {
+            $startDateArr = explode(',', $startDateval);
+            $endDateArr = explode(',', $startDateval);
+        } else {
+            $startDateArr = array($startDateval);
+            $endDateArr = array($endDateVal);
         }
-        if(Mage::app()->getRequest()->getParam('update_cart_action') == 'update_qty' && !Mage::registry('no_quote')){
-            Mage::register('no_quote', 1);
+        $maxRetQty = 10000;
+        foreach ($startDateArr as $count => $startDate) {
+            $endDate = $endDateArr[$count];
+            if($startDate && $endDate){
+                if(Mage::registry('stock_id')){
+                    $_regKey = Mage::registry('stock_id');
+                    Mage::unregister('stock_id');
+                }
+                Mage::register('stock_id', $stockId);
+                Mage::register('no_quote', 1);
+
+                $maxQty = self::getQuantity($product, $startDate, $endDate);
+                Mage::unregister('no_quote');
+               if($maxRetQty > $maxQty){
+                   $maxRetQty = $maxQty;
+               }
+            }
         }
-        $maxQty = self::getQuantity($productId, $start_date, $end_date);
         Mage::unregister('no_quote');
-        if ($maxQty < $qty) {
-            return false;
+        if(isset($_regKey)){
+            Mage::unregister('stock_id');
+            Mage::register('stock_id', $_regKey);
         }
 
-        return true;
+        if ($origQty > -1 && $maxRetQty > $origQty) {
+            $maxRetQty = $origQty;
+        }
+
+        return $maxRetQty;
     }
 
 }

@@ -5,6 +5,179 @@
  */ 
 class ITwebexperts_PPRWarehouse_Model_Sales_Quote_Item extends Innoexts_Warehouse_Model_Sales_Quote_Item
 {
+
+    /**
+     * Get splitted stock data
+     *
+     * @return array of Varien_Object
+     */
+    public function getSplittedStockData()
+    {
+        return parent::getSplittedStockData();
+        $stockData = array();
+        $stockQtys = $this->getSplittedStockQtys();
+        if (count($stockQtys)) {
+            $productId = $this->getProductId();
+            foreach ($stockQtys as $stockId => $qty) {
+                $stockIds = array($stockId => $stockId);
+                $stockItems = array();
+                foreach ($this->getStockItems() as $_stockId => $stockItem) {
+                    if ($_stockId == $stockId) {
+                        $stockItems[$stockId] = $stockItem;
+                        break;
+                    }
+                }
+                $itemStockData = new Varien_Object();
+                $itemStockData->setProductId($productId);
+                $itemStockData->setProduct($this->getProduct());
+                $itemStockData->setStockItems($stockItems);
+                $itemStockData->setStockIds($stockIds);
+                $itemStockData->setStockId($stockId);
+                $itemStockData->setIsInStock((count($stockIds) ? true : false));
+                $itemStockData->setQty($qty);
+                if ($this->isParentItem()) {
+                    $children = array();
+                    foreach ($this->getChildren() as $childItem) {
+                        $childItemStockData = $childItem->getStockData($stockIds);
+                        $children[$childItem->getProductId()] = $childItemStockData;
+                    }
+                } else {
+                    $children = null;
+                }
+                $itemStockData->setChildren($children);
+                $itemStockData->setParent((count($children) ? true : false));
+                $stockData[] = $itemStockData;
+            }
+        }
+        return $stockData;
+    }
+
+    /**
+     * Get complex item splitted stock quantities
+     *
+     * @param array $children
+     * @param string $childQtyMethod
+     *
+     * @return array
+     */
+    protected function _getContainerItemSplittedStockQtys($children, $childQtyMethod)
+    {
+        $stockQtys = array();
+        $qty = $this->getQty();
+        foreach ($children as $childItem) {
+            $childProductId = $childItem->getProductId();
+            $childQty = $childItem->$childQtyMethod();
+            if ($childQty <= 0) {
+                $childQty = 1;
+            }
+            $totalQty = $qty * $childQty;
+            foreach ($childItem->getStockItems() as $stockId => $stockItem) {
+                //$stockQty = $stockItem->getMaxStockQty($totalQty);
+                $stockQty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::getQuantityForProductAndStock($childItem->getProduct(), $stockId, $totalQty);
+                if (($stockQty !== false) && ($stockQty > 0)) {
+                    $stockQtys[$stockId][$childProductId] = floor($stockQty / $childQty);
+                } else {
+                    $stockQtys[$stockId][$childProductId] = null;
+                }
+            }
+        }
+        $_stockQtys = $stockQtys;
+        $stockQtys = array();
+        $stockIds = $this->getStockIds();
+        foreach ($_stockQtys as $stockId => $_qtys) {
+            $_qty = null;
+            if (in_array($stockId, $stockIds)) {
+                foreach ($children as $childItem) {
+                    $childProductId = $childItem->getProductId();
+                    if (!isset($_qtys[$childProductId]) && is_null($_qtys[$childProductId])) {
+                        $_qty = null;
+                        break;
+                    } else {
+                        if (is_null($_qty) || ($_qtys[$childProductId] < $_qty)) {
+                            $_qty = $_qtys[$childProductId];
+                        }
+                    }
+                }
+            }
+            $stockQtys[$stockId] = $_qty;
+        }
+        $_stockQtys = $stockQtys;
+        $stockQtys = array();
+        $totalQty = $this->getQty();
+        $stockIds = array();
+        foreach ($_stockQtys as $stockId => $_qty) {
+            array_push($stockIds, $stockId);
+        }
+        usort($stockIds, array($this, 'sortStockIds'));
+        foreach ($stockIds as $stockId) {
+            if (isset($_stockQtys[$stockId])) {
+                $_qty = $_stockQtys[$stockId];
+                if (!is_null($_qty)) {
+                    if ($totalQty > $_qty) {
+                        $stockQtys[$stockId] = $_qty;
+                        $totalQty -= $_qty;
+                    } else {
+                        $stockQtys[$stockId] = $totalQty;
+                        $totalQty = 0;
+                        break;
+                    }
+                }
+            }
+        }
+        if ($totalQty > 0) {
+            $stockQtys = array();
+        }
+        return $stockQtys;
+    }
+    /**
+     * Get complex item splitted stock quantities
+     *
+     * @return array
+     */
+    protected function getContainerItemSplittedStockQtys()
+    {
+        $stockQtys = array();
+        if ($this->isParentItem()) {
+            $stockQtys = $this->_getContainerItemSplittedStockQtys($this->getChildren(), 'getQty');
+        }
+        return $stockQtys;
+    }
+    /**
+     * Get simple item splitted stock quantities
+     *
+     * @return array
+     */
+    protected function getSimpleItemSplittedStockQtys()
+    {
+        $stockQtys = array();
+        if (!count($this->getQtyOptions())) {
+            $totalQty = $this->getTotalQty();
+            $stockItems = $this->getStockItems();
+            $stockIds = $this->getStockIds();
+            usort($stockIds, array($this, 'sortStockIds'));
+            foreach ($stockIds as $stockId) {
+                if (isset($stockItems[$stockId])) {
+                    //$stockItem = $stockItems[$stockId];
+                    //$stockQty = $stockItem->getMaxStockQty($totalQty);
+                    $stockQty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::getQuantityForProductAndStock($this->getProduct(), $stockId, $totalQty);
+                    if (($stockQty !== false) && ($stockQty > 0)) {
+                        $stockQtys[$stockId] = $stockQty;
+                        $totalQty -= $stockQty;
+                        if ($totalQty <= 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if ($totalQty > 0) {
+                $stockQtys = array();
+            }
+        } else {
+            $stockQtys = $this->_getContainerItemSplittedStockQtys($this->getQtyOptions(), 'getValue');
+        }
+        return $stockQtys;
+    }
+
 	/**
 	 * @param null $stockItem
 	 * @return Varien_Object

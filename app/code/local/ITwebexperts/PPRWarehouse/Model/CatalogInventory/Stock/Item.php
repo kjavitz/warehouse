@@ -17,70 +17,133 @@ class ITwebexperts_PPRWarehouse_Model_CatalogInventory_Stock_Item extends Innoex
 	 */
 	public function checkQuoteItemQty($qty, $summaryQty, $origQty = 0, $quoteItem = null)
 	{
+        //todo check this for configurable, bundle with multiple qty options, grouped
 		if($quoteItem && $quoteItem->getProductType() == ITwebexperts_Payperrentals_Helper_Data::PRODUCT_TYPE){
 
 			$product = $quoteItem->getProduct();
+            $stockId = $this->getStockId();
             $result = new Varien_Object();
             $result->setHasError(false);
-            /*if($quoteItem->getParentItem()){
-                $options = $quoteItem->getParentItem()->getProductOptionByCode('info_buyRequest');
-            }else{
-                $options = $quoteItem->getProductOptionByCode('info_buyRequest');
-            }*/
-            if (!is_object($product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION))) {
-                $source = unserialize($product->getCustomOption('info_buyRequest')->getValue());
-                if (isset($source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION])) {
-                    $startDateval = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION];
-                    $endDateVal = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION];
-                    if (isset($source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL])) {
-                        $nonSequential = $source[ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL];
-                    }
+
+            if (!is_numeric($qty)) {
+                $qty = Mage::app()->getLocale()->getNumber($qty);
+            }
+
+            /**
+             * Check quantity type
+             */
+            $result->setItemIsQtyDecimal($this->getIsQtyDecimal());
+
+            if (!$this->getIsQtyDecimal()) {
+                $result->setHasQtyOptionUpdate(true);
+                $qty = intval($qty);
+
+                /**
+                 * Adding stock data to quote item
+                 */
+                $result->setItemQty($qty);
+
+                if (!is_numeric($qty)) {
+                    $qty = Mage::app()->getLocale()->getNumber($qty);
                 }
+                $origQty = intval($origQty);
+                $result->setOrigQty($origQty);
+            }
+            if ($this->getMinSaleQty() && $qty < $this->getMinSaleQty()) {
+                $result->setHasError(true)
+                        ->setMessage(
+                                Mage::helper('cataloginventory')->__('The minimum quantity allowed for purchase is %s.', $this->getMinSaleQty() * 1)
+                        )
+                        ->setErrorCode('qty_min')
+                        ->setQuoteMessage(Mage::helper('cataloginventory')->__('Some of the products cannot be ordered in requested quantity.'))
+                        ->setQuoteMessageIndex('qty');
+                return $result;
+            }
+
+            if ($this->getMaxSaleQty() && $qty > $this->getMaxSaleQty()) {
+                $result->setHasError(true)
+                        ->setMessage(
+                                Mage::helper('cataloginventory')->__('The maximum quantity allowed for purchase is %s.', $this->getMaxSaleQty() * 1)
+                        )
+                        ->setErrorCode('qty_max')
+                        ->setQuoteMessage(Mage::helper('cataloginventory')->__('Some of the products cannot be ordered in requested quantity.'))
+                        ->setQuoteMessageIndex('qty');
+                return $result;
+            }
+
+            $result->addData($this->checkQtyIncrements($qty)->getData());
+            if ($result->getHasError()) {
+                return $result;
+            }
+
+            $isAvailable = false;
+            if (ITwebexperts_Payperrentals_Helper_Inventory::isAllowedOverbook($product->getId())) {
+                $isAvailable = true;
+            }
+            if(!$isAvailable){
+                $maxQty = ITwebexperts_PPRWarehouse_Helper_Payperrentals_Inventory::getQuantityForProductAndStock($product, $stockId);
+                if($maxQty >= $qty){
+                    $isAvailable = true;
+                }
+            }
+
+
+
+
+            if ($isAvailable) {
+                return $result;
+            }
+
+
+            if (!$isAvailable) {
+                $message = Mage::helper('cataloginventory')->__('The requested quantity for "%s" is not available.', $this->getProductName());
+                $result->setHasError(true)
+                        ->setMessage($message)
+                        ->setQuoteMessage($message)
+                        ->setQuoteMessageIndex('qty');
+                return $result;
             } else {
-                $startDateval = $product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::START_DATE_OPTION)->getValue();
-                $endDateVal = $product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::END_DATE_OPTION)->getValue();
-                if (is_object($product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL))) {
-                    $nonSequential = $product->getCustomOption(ITwebexperts_Payperrentals_Model_Product_Type_Reservation::NON_SEQUENTIAL)->getValue();
+                if (($this->getQty() - $summaryQty) < 0) {
+                    if ($this->getProductName()) {
+                        if ($this->getIsChildItem()) {
+                            $backorderQty = ($this->getQty() > 0) ? ($summaryQty - $this->getQty()) * 1 : $qty * 1;
+                            if ($backorderQty > $qty) {
+                                $backorderQty = $qty;
+                            }
+
+                            $result->setItemBackorders($backorderQty);
+                        } else {
+                            $orderedItems = $this->getOrderedItems();
+                            $itemsLeft = ($this->getQty() > $orderedItems) ? ($this->getQty() - $orderedItems) * 1 : 0;
+                            $backorderQty = ($itemsLeft > 0) ? ($qty - $itemsLeft) * 1 : $qty * 1;
+
+                            if ($backorderQty > 0) {
+                                $result->setItemBackorders($backorderQty);
+                            }
+                            $this->setOrderedItems($orderedItems + $qty);
+                        }
+
+                        if ($this->getBackorders() == Mage_CatalogInventory_Model_Stock::BACKORDERS_YES_NOTIFY) {
+                            if (!$this->getIsChildItem()) {
+                                $result->setMessage(
+                                        Mage::helper('cataloginventory')->__('This product is not available in the requested quantity. %s of the items will be backordered.', ($backorderQty * 1))
+                                );
+                            } else {
+                                $result->setMessage(
+                                        Mage::helper('cataloginventory')->__('"%s" is not available in the requested quantity. %s of the items will be backordered.', $this->getProductName(), ($backorderQty * 1))
+                                );
+                            }
+                        } elseif (Mage::app()->getStore()->isAdmin()) {
+                            $result->setMessage(
+                                    Mage::helper('cataloginventory')->__('The requested quantity for "%s" is not available.', $this->getProductName())
+                            );
+                        }
+                    }
+                } else {
+                    if (!$this->getIsChildItem()) {
+                        $this->setOrderedItems($qty + (int)$this->getOrderedItems());
+                    }
                 }
-            }
-
-            if ($nonSequential == 1) {
-                $startDateArr = explode(',', $startDateval);
-                $endDateArr = explode(',', $startDateval);
-            } else {
-                $startDateArr = array($startDateval);
-                $endDateArr = array($endDateVal);
-            }
-            $stockId = $this->getStockId();
-            //$newQty = 0;
-            foreach ($startDateArr as $count => $startDate) {
-                $endDate = $endDateArr[$count];
-
-                if($startDate && $endDate){
-                    if(Mage::registry('stock_id')){
-                        $_regKey = Mage::registry('stock_id');
-                        Mage::unregister('stock_id');
-                    }
-                    Mage::register('stock_id', $stockId);
-                    /** @var $inventoryHelper ITwebexperts_Payperrentals_Helper_Inventory */
-
-                    $iQty = ITwebexperts_Payperrentals_Helper_Data::getUpdatingQty($quoteItem);
-                    if($iQty){
-                        $qty = $iQty;
-                    }
-                    Mage::register('no_quote', 1);
-                    $inventoryHelper = Mage::helper('payperrentals/inventory');
-                    $isAvailable = $inventoryHelper->isAvailable($product->getId(), $startDate, $endDate, $qty, $quoteItem);
-                    //$return = parent::checkQuoteItemQty( $newQty, $summaryQty, $origQty );
-                    if(!$isAvailable){
-                        $result->setHasError(true);
-                    }
-                }
-            }
-
-            if(isset($_regKey)){
-                Mage::unregister('stock_id');
-                Mage::register('stock_id', $_regKey);
             }
 
             return $result;
